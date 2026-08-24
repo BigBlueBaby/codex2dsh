@@ -70,6 +70,7 @@
     "memory"
   ],
   "license": "MIT",
+  "homepage": "https://github.com/BigBlueBaby/codex2dsh",
   "devDependencies": {
     "@deepseek-ai/dsh-tools": "^0.1.0-rc.6"
   },

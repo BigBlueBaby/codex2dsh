@@ -2,106 +2,167 @@
 
 # 🔁 Codex2DSH
 
-**把 Codex（OpenAI Codex CLI / Desktop）的 MCP、技能、全局指令、记忆与运行偏好，以「适配 DSH」的形式一键迁移进 DeepSeek Harness —— 以 DSH 插件形式交付，可测试、可分享、可上架社区市场。**
+**把 Codex（OpenAI Codex CLI / Desktop）的 MCP 服务器、技能、全局配置、记忆，一键迁移进 DeepSeek Harness（DSH）—— 全程可视化操作，无需命令行。**
 
+[![npm version](https://img.shields.io/npm/v/codex2dsh?style=for-the-badge&logo=npm&logoColor=white)](https://www.npmjs.com/package/codex2dsh)
+[![npm downloads](https://img.shields.io/npm/dm/codex2dsh?style=for-the-badge&logo=npm&logoColor=white)](https://www.npmjs.com/package/codex2dsh)
+[![CI](https://img.shields.io/github/actions/workflow/status/BigBlueBaby/codex2dsh/ci.yml?style=for-the-badge&logo=githubactions&logoColor=white)](https://github.com/BigBlueBaby/codex2dsh/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 [![Node.js >= 22.13](https://img.shields.io/badge/Node.js-%3E%3D22.13-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](package.json)
 [![dsh >= 0.1.x](https://img.shields.io/badge/dsh-%3E%3D0.1.x-4A90D9?style=for-the-badge)](docs/01-总体架构.md)
-[![CI](https://img.shields.io/badge/CI-GitHub_Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white)](.github/workflows/ci.yml)
 
-[📖 快速开始](#-快速开始) · [✨ 功能](#-功能) · [🗺️ 映射范围](#-映射范围) · [📚 文档](#-文档) · [🚀 路线图](docs/08-路线图.md) · [🤝 贡献](CONTRIBUTING.md)
+[🖥️ 可视化使用指南](#-可视化使用指南) · [📥 安装](#-安装) · [✨ 功能](#-功能) · [🔒 安全说明](#-安全说明) · [❓ 常见问题](#-常见问题) · [📚 文档](#-文档)
 
 </div>
 
-> **一句话**：Codex 的配置是资产，不是牢笼。`codex2dsh` 帮你把多年积累的 MCP 服务器、技能、全局规则、记忆一键「翻译」成 DSH 原生形态，迁移全程**只读源码、脱敏密钥、dry-run 预览、人工确认**。
-
-> 🚧 **开发状态**：里程碑 M1–M4 已完成（9 个迁移工具全部可用，70+ 单测全绿，L3 冒烟通过，真实 `~/.codex` 演练验证）；M5 发布流程已就绪（npm / GitHub Actions release workflow），待创建 GitHub 仓库后即可发布分享。详见 [docs/08-路线图.md](docs/08-路线图.md)。
+> **一句话**：Codex 的配置是资产，不是牢笼。`codex2dsh` 帮你把多年积累的 MCP 服务器、技能、全局规则、记忆「翻译」成 DSH 原生形态——**迁移全程可视化操作、源码只读、密钥按原样迁移、dry-run 预览、人工确认**。
 
 ---
 
-## 📥 快速开始
+## 🖥️ 可视化使用指南（推荐）
+
+### 打开迁移面板
+
+安装插件并**重启 DSH** 后：
+
+1. 打开 **设置 → 插件**
+2. 找到 **「Codex 迁移」** 标签页
+3. 面板包含 5 个区域，从下到上操作即可完成迁移
+
+### 面板功能一览
+
+| 区域 | 功能 |
+| --- | --- |
+| **① 状态总览** | 源配置根路径、全部可迁移资产清单（MCP/技能/指令/记忆/会话）、迁移台账条数、凭据文件黄色警告 |
+| **② 迁移选项** | 「密钥脱敏」开关（默认**原样迁移**，直接可用）、「随迁本地工具目录」开关（默认开） |
+| **③ 全量迁移向导** | 一键走完 **1 预览 → 2 选择 → 3 执行 → 4 完成** 四步全流程（推荐首次迁移使用） |
+| **④ 分类迁移** | 7 张独立卡片：MCP 服务器、技能、全局指令、记忆、配置建议、会话导入、迁移体检——每张卡片有勾选清单 + 「预览 / 执行」按钮 |
+| **⑤ 最近结果** | 最近一次执行的徽章式结果（已迁移=绿 / 跳过=灰 / 无效=红 / 预览=蓝）+ 警告列表 |
+
+### 推荐流程（首次迁移）
+
+1. **看状态**：打开面板先看「状态总览」——确认源配置根正确、了解有哪些资产、注意黄色凭据警告
+2. **走向导**：点「开始全量迁移」
+   - **第 1 步 预览**：查看各分类资产规模（零副作用）
+   - **第 2 步 选择**：勾选要迁移的分类；MCP 与技能可在下方分类卡片细化勾选
+   - **第 3 步 执行**：自动按 MCP → 技能 → 指令 → 记忆 → 配置 顺序执行，显示进度
+   - **第 4 步 完成**：查看每类结果汇总（成功 / 跳过 / 警告）
+3. **细化选择（可选）**：在「分类迁移」里
+   - **MCP 服务器**：勾选要迁移的服务器（如只留 `google-mcp-toolbox`），本地工具目录会自动随迁并重写路径
+   - **技能**：勾选想要的技能；用「排除前缀」批量取消勾选整套技能（如输入 `ccpanes-` 排除全部 ccpanes 技能）
+4. **收尾**：迁移产物（如 `mcp-mirror.cordis.yml`）生成后，按产物中的提示**人工审阅**并合并进 DSH profile 即可使用（见 [常见问题](#mcp-迁移后如何让-dsh-真正用上这些服务器)）
+
+> 💡 每个「执行」按钮点击前都有确认框；所有写盘操作默认先「预览」，确认后再执行。
+
+---
+
+## 📥 安装
 
 ### 环境要求
 
-- Node.js ≥ 22.13（DSH 运行时要求）
-- DeepSeek Harness `dsh` CLI ≥ 0.1.x（本插件在 `0.1.1-rc.2` 实测）
-- 本机已有 Codex 配置（`~/.codex/`，Windows 为 `C:\Users\<你>\ .codex\`）
+- Node.js ≥ 22.13
+- DeepSeek Harness `dsh` ≥ 0.1.x（本插件在 `0.1.1-rc.2` 实测）
+- 本机已有 Codex 配置（`~/.codex/`，Windows 为 `C:\Users\<你>\.codex\`）
 
-### 安装插件（本地开发模式）
+### 方式一：npm 包安装（推荐）
 
 ```bash
-# 在 codex2dsh 项目目录外执行：
-dsh plugin --profile web add -w link:D:/Projects/codex2dsh   # Windows
-# 或发布后直接装 npm 包：
+# DSH Desktop 用户（desktop profile）：
+dsh plugin --profile desktop add codex2dsh
+
+# 或 dsh CLI / Web profile 用户：
 dsh plugin --profile web add codex2dsh
 ```
 
-> 安装后重启 DSH（Desktop 或 `dsh` CLI），插件即注册一组 `migrate_codex_*` 工具与 `/codex2dsh` 命令。
+安装后**重启 DSH**，即可在「设置 → 插件」看到「Codex 迁移」面板。
 
-### 首次迁移（推荐流程）
+### 方式二：本地开发 / 试用最新版
 
-1. **预览**：`migrate_codex_preview({})` —— 只读扫描 `~/.codex`，返回将迁移的清单（MCP 服务器、技能、指令、记忆、会话规模），零副作用。
-2. **逐项迁移**（每步都有 `preview:true` 可先看再落盘）：
-   - `migrate_codex_mcp({ apply: true })` → 生成 `mcp-mirror.cordis.yml`（人工审阅后合并进 profile）
-   - `migrate_codex_skills({ apply: true })` → 技能落盘 `~/.agents/skills/<name>/SKILL.md`
-   - `migrate_codex_instructions({ apply: true })` → 全局规则落为 DSH 指令资产 / preset
-   - `migrate_codex_memory({ apply: true })` → 记忆导出为可检索的 DSH 记忆资产
-   - `migrate_codex_sessions({ preview: true })` → 委托 `import_codex` 把会话历史导入为可续聊的 DSH 会话
-3. **体检**：`codex2dsh_doctor()` —— 校验迁移结果、报告未迁移项与残留密钥风险。
+```bash
+dsh plugin --profile desktop add -w link:D:/Projects/codex2dsh   # 替换为你的项目路径
+```
 
-> 会话导入能力由生态插件 **dsh-chat-import**（`import_codex` / `scan_discover`）提供，本插件负责**配置与资产**侧并与其协同，不重复造轮子。详见 [docs/01-总体架构.md](docs/01-总体架构.md#-范围界定)。
+> 卸载：`dsh plugin --profile <name> remove codex2dsh`，已迁移的资产不会被删除。
 
 ---
 
 ## ✨ 功能
 
-| 能力 | 工具 / 入口 | 说明 |
+| 能力 | 入口 | 说明 |
 | --- | --- | --- |
-| 迁移总览 | `migrate_codex_preview` | 只读扫描 `~/.codex` 全部可迁移资产，输出结构化清单与规模 |
-| MCP 镜像 | `migrate_codex_mcp` | 解析 `config.toml` 的 `[mcp_servers.*]`，生成可人工审阅合并的 DSH MCP client YAML（`mcp-mirror.cordis.yml`）；**密钥默认原样迁移**（可选脱敏）；`include/exclude` 选择性迁移；**本地工具目录（mcp-toolbox 等）随迁并重写路径**；绝不自动改 profile |
-| 技能转换 | `migrate_codex_skills` | `~/.codex/skills/<name>/SKILL.md` → `~/.agents/skills/<name>/SKILL.md`，frontmatter 适配（`kind: dsh`），脚本目录随迁，冲突加后缀消歧、内容相同幂等跳过；**`include/exclude` 选择性迁移（如排除 `ccpanes-*`）** |
-| 全局指令 | `migrate_codex_instructions` | `AGENTS.md` / `instructions.md` → DSH 指令资产（项目级与全局级分开处理） |
-| 记忆迁移 | `migrate_codex_memory` | Codex `[memories]` 与记忆库 → DSH 记忆资产（只读导出、可检索） |
-| 模型与偏好 | `migrate_codex_config` | `model_provider` / `model` → `settings.yaml` 的 `agent-default-model` 建议（只读建议，人工确认） |
-| 会话历史 | `migrate_codex_sessions` | 统计 `~/.codex/sessions`（数量/体积/时间范围）并委托 `import_codex`（dsh-chat-import）导入为可续聊会话；未安装时返回安装指引 |
-| 体检报告 | `codex2dsh_doctor` | 迁移前后健康检查：已迁移/待迁移/不可迁移/密钥残留 |
-| 可视化面板 | 设置 → 插件 → **Codex 迁移** Tab | 状态总览 + 迁移选项（密钥原样/脱敏、工具随迁）+ **全量迁移向导**（预览→选择→执行→汇总）+ **分类迁移卡片**（MCP/技能勾选清单、预览/执行按钮、结果徽章） |
-| 安全边界 | 全部工具 | 源码只读、**密钥默认原样迁移**（`maskSecrets:true` 可选脱敏）、dry-run 优先、`expectedHash` 强校验、迁移台账落盘 |
+| 🖥️ **可视化迁移面板** | 设置 → 插件 → Codex 迁移 | 状态总览 + 迁移选项 + 全量迁移向导（预览→选择→执行→完成）+ 分类迁移卡片 + 结果徽章 |
+| **全量迁移向导** | 面板「开始全量迁移」 | 四步向导一键迁移全部资产，逐步展示进度与结果 |
+| **MCP 镜像** | 面板 MCP 卡片 / `migrate_codex_mcp` | 解析 `config.toml` 的 `[mcp_servers.*]` 生成可合并的 DSH MCP client YAML；**密钥默认原样迁移**（可选脱敏）；`include/exclude` 选择性迁移；**本地工具目录（如 mcp-toolbox）随迁并重写路径** |
+| **技能转换** | 面板技能卡片 / `migrate_codex_skills` | `~/.codex/skills/<name>/SKILL.md` → DSH 技能资产（frontmatter 适配 `kind: dsh`），脚本目录随迁，冲突自动消歧、幂等跳过；支持**按前缀批量排除**（如 `ccpanes-`） |
+| **全局指令** | 面板指令卡片 / `migrate_codex_instructions` | `AGENTS.md` / `instructions.md` → DSH 指令资产（原文完整保留），项目级规则给出挂载建议 |
+| **记忆迁移** | 面板记忆卡片 / `migrate_codex_memory` | Codex 记忆（含 sqlite 只读探测）→ DSH 记忆资产，不可读时降级报告 |
+| **配置建议** | 面板配置卡片 / `migrate_codex_config` | 模型 / Provider / 权限 / 项目信任 → 只读建议片段（绝不自动改 `settings.yaml`） |
+| **会话导入** | 面板会话卡片 / `migrate_codex_sessions` | 统计会话规模并委托 `import_codex`（dsh-chat-import）导入为可续聊会话 |
+| **迁移体检** | 面板体检卡片 / `codex2dsh_doctor` | 逐资产状态：已迁移 / 待迁移 / 不可迁移 / 密钥残留 |
+| **命令行** | `codex2dsh` | 无 GUI 环境的同能力 CLI：`preview / mcp / skills / instructions / memory / config / sessions / doctor / ledger` |
 
 ---
 
-## 🗺️ 映射范围
+## 🔧 命令行（可选）
 
-| Codex 资产 | 位置 | 迁移目标 | 方式 |
-| --- | --- | --- | --- |
-| MCP 服务器 | `~/.codex/config.toml` `[mcp_servers.*]` | DSH MCP client 配置（`cordis.patch.yml` 合并片段） | 生成 YAML，人工审阅 |
-| 技能 Skills | `~/.codex/skills/<name>/` | `~/.agents/skills/<name>/`（`$DSH_AGENTS_HOME`） | 直接落盘 |
-| 全局指令 | `~/.codex/AGENTS.md`、`instructions.md` | DSH 指令资产 / preset 系统提示 | 转换落盘 |
-| 项目信任 | `[projects.*] trust_level` | 建议（DSH 权限预设对照） | 只读建议 |
-| 模型与 Provider | `model` / `model_provider` / `[model_providers.*]` | `settings.yaml` `agent-default-model` / llm providers | 只读建议 |
-| 记忆 | `~/.codex/memories/`、`[memories]` | DSH 记忆资产 | 只读导出 |
-| 会话历史 | `~/.codex/sessions/**/rollout-*.jsonl` | DSH 可续聊会话 | 委托 `import_codex` |
-| **不迁移** | `auth.json`、`.codex-global-state.json`、浏览器凭据、桌面主题 | —— | 明示跳过并说明原因 |
+```bash
+codex2dsh preview                      # 只读预览全部可迁移资产
+codex2dsh mcp --apply                  # 生成 MCP 镜像（密钥默认原样；--mask-secrets 脱敏）
+codex2dsh skills --apply --exclude ccpanes-*   # 技能迁移（排除 ccpanes）
+codex2dsh doctor                       # 迁移体检
+codex2dsh ledger                       # 查看迁移台账
+```
 
-完整逐项映射与字段级对照见 [docs/03-映射规范.md](docs/03-映射规范.md)。
+---
+
+## 🔒 安全说明
+
+| 承诺 | 说明 |
+| --- | --- |
+| **源码只读** | `~/.codex/**` 任何文件永不写入、永不移动、永不删除 |
+| **密钥原样迁移（默认）** | 为让迁移后配置**直接可用**，`password/token` 等敏感值按原样写入产物；产物含真实凭据，**请勿提交公开仓库**；面板「迁移选项」可一键切换为脱敏（`****`） |
+| **凭据文件不触碰** | `auth.json`、`.codex-global-state.json` 等只报告存在，不读取、不迁移 |
+| **默认预览** | 一切写盘操作默认 dry-run，确认后才执行 |
+| **profile 不自动改** | MCP / 配置只生成待审阅片段，由你人工合并，绝不自动修改 |
+| **幂等不覆盖** | 目标已存在且内容不同时拒绝覆盖（需 force），防覆盖人工修改 |
+
+---
+
+## ❓ 常见问题
+
+### MCP 迁移后如何让 DSH 真正用上这些服务器？
+迁移生成的是**待审阅片段**（如 `~/.dsh/codex2dsh/mcp-mirror.cordis.yml`）。请把片段中的 `- insert: dsh-mcp-client` 块合并进 profile 的 `cordis.patch.yml`（`~/.dsh/profiles/<你的profile>/cordis.patch.yml`），然后重启 DSH。
+
+### 我该用哪个 profile？
+**DSH Desktop** 用户看「设置 → 关于/插件」里当前激活的 profile（通常是 `desktop` 或你切换后的 `web`）——插件要装到**当前激活的 profile** 才会出现在设置里。用 `dsh plugin --profile <当前profile> add codex2dsh`。
+
+### 连接 MCP 服务器失败？
+部分服务器（如 Google MCP Toolbox）的 stdio transport 走 **NDJSON** 而非标准帧格式，DSH 的 MCP 客户端可能连不上。此时可改用 **HTTP 模式**：`toolbox serve` 常驻 + 镜像配置 `type: http`（`url: http://127.0.0.1:5000/mcp`）。如遇此类问题，可在 [Issues](https://github.com/BigBlueBaby/codex2dsh/issues) 反馈，我们会给出适配指引。
+
+### 迁移后技能/指令去哪了？
+- 技能 → `~/.agents/skills/<name>/`（可用 `DSH_AGENTS_HOME` 覆盖）
+- 指令 → `~/.agents/instructions/`
+- 记忆 → `~/.dsh/memories/codex/`
+- MCP 镜像与台账 → `~/.dsh/codex2dsh/`
+
+### 卸载后数据会丢吗？
+不会。插件从不自动删除已迁移资产；卸载只移除插件本身。
 
 ---
 
 ## 📚 文档
 
-完整详细的开发文档（中文，含实现方案、测试验收、发布分享）位于 [`docs/`](docs/)：
-
 | 文档 | 内容 |
 | --- | --- |
-| [01-总体架构.md](docs/01-总体架构.md) | 项目目标、范围界定、DSH 插件体系（Cordis / bundle / patch / host 服务）、技术栈决策 |
-| [02-Codex配置解剖.md](docs/02-Codex配置解剖.md) | Codex 配置全解剖：`config.toml` 各节字段表、skills、AGENTS.md、会话、记忆、密钥文件（含脱敏实测样例） |
-| [03-映射规范.md](docs/03-映射规范.md) | Codex → DSH 逐项映射规范（字段级对照、转换规则、幂等与冲突策略、不迁移清单） |
-| [04-插件API参考.md](docs/04-插件API参考.md) | DSH 插件 API 参考：package.json `dsh` 字段、`cordis.patch.yml`、`apply/inject/name`、`defineTool`、commands、webServer 路由、host 服务清单 |
-| [05-实现方案.md](docs/05-实现方案.md) | 实现方案：模块划分、工具清单与参数、数据流、错误处理、幂等设计 |
-| [06-测试与验收.md](docs/06-测试与验收.md) | 测试策略：单元测试、夹具、headless 冒烟、真实迁移演练、验收矩阵、CI |
-| [07-发布与分享.md](docs/07-发布与分享.md) | npm 发布、awesome-dsh-plugin 收录、dsh-community-market 目录契约、awesome 列表、版本管理 |
-| [08-路线图.md](docs/08-路线图.md) | 里程碑（M1–M5）与需求清单（REQ 表） |
-| [09-安全边界.md](docs/09-安全边界.md) | 只读原则、密钥脱敏、人工确认、审计与台账 |
+| [01-总体架构](docs/01-总体架构.md) | 项目目标、DSH 插件体系、技术栈 |
+| [02-Codex配置解剖](docs/02-Codex配置解剖.md) | Codex 配置全解剖（config.toml / skills / 记忆 / 凭据） |
+| [03-映射规范](docs/03-映射规范.md) | 逐项映射规范（MCP / 技能 / 指令 / 记忆 / 配置） |
+| [04-插件API参考](docs/04-插件API参考.md) | 开发者：插件 API 与 client 注入契约 |
+| [05-实现方案](docs/05-实现方案.md) | 开发者：模块划分与实现细节 |
+| [06-测试与验收](docs/06-测试与验收.md) | 测试策略与验收矩阵 |
+| [07-发布与分享](docs/07-发布与分享.md) | 开发者：npm 发布与社区市场收录 |
+| [08-路线图](docs/08-路线图.md) | 里程碑与需求清单 |
+| [09-安全边界](docs/09-安全边界.md) | 安全承诺与密钥策略 |
 
 ---
 
