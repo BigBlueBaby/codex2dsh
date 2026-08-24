@@ -25,7 +25,10 @@ if (registerTools) {
     const registered = []
     return {
       registered,
-      tools: { register: (t) => registered.push(t) },
+      tools: {
+        register: (t) => registered.push(t),
+        get: (name) => registered.find((t) => t.name === name),
+      },
     }
   }
 
@@ -123,13 +126,43 @@ if (registerTools) {
     }
   })
 
-  test('占位工具返回友好报告而非抛错（M4 会话委托）', async () => {
-    const ctx = fakeCtx()
-    registerTools(ctx, '/tmp/ledger')
-    const tool = ctx.registered.find((t) => t.name === 'migrate_codex_sessions')
-    const report = await tool.execute({})
-    assert.equal(report.ok, false)
-    assert.ok(report.warnings[0].includes('尚未实现'))
+  test('migrate_codex_sessions：未装 import_codex → 安装指引；已装 → 委托', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'codex2dsh-toolsess-'))
+    const home = join(root, 'codex-home')
+    const day = join(home, 'sessions', '2026', '08', '13')
+    mkdirSync(day, { recursive: true })
+    writeFileSync(join(day, 'rollout-20260813-000001-a.jsonl'), '{"type":"response_item"}\n', 'utf8')
+    const ledger = join(root, 'ledger')
+    try {
+      // 未安装：提示
+      const ctx1 = fakeCtx()
+      registerTools(ctx1, ledger)
+      const tool1 = ctx1.registered.find((t) => t.name === 'migrate_codex_sessions')
+      const guidance = await tool1.execute({ codexHome: home })
+      assert.ok(guidance.warnings.some((w) => w.includes('dsh-chat-import')))
+
+      // 已安装（fake import_codex 先注册进 ctx）：委托
+      const calls = []
+      const fakeImport = {
+        name: 'import_codex',
+        async execute(args) {
+          calls.push(args)
+          return { ok: true, sessionIds: ['s1'] }
+        },
+      }
+      const ctx2 = fakeCtx()
+      ctx2.tools.register(fakeImport)
+      registerTools(ctx2, ledger)
+      const tool2 = ctx2.registered.find((t) => t.name === 'migrate_codex_sessions')
+      const delegated = await tool2.execute({ codexHome: home, budget: 50000 })
+      assert.ok(delegated.items.some((i) => i.status === 'delegated'))
+      assert.equal(calls[0].budget, 50000)
+      // 台账
+      const entries = JSON.parse(readFileSync(join(ledger, 'ledger.json'), 'utf8'))
+      assert.ok(entries.some((e) => e.tool === 'migrate_codex_sessions'))
+    } finally {
+      rmSync(root, { recursive: true, force: true })
+    }
   })
 
   test('migrate_codex_skills：dry-run → apply → 幂等 skip', async () => {

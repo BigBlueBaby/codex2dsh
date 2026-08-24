@@ -25,5 +25,7 @@ jobs:
         run: npm run check:fixtures
       - name: 单元测试
         run: npm test
+      - name: L3 集成冒烟（临时环境全工具链）
+        run: node .github/scripts/smoke.mjs
       - name: 打包自检（包体含 cordis.patch.yml、无越界）
         run: npm pack --dry-run
