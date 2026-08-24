@@ -107,7 +107,7 @@ dsh plugin --profile web add codex2dsh
 
 ## 🤝 参与
 
-- 使用中发现问题或有新想法 → [Issues](https://github.com/<你的用户名>/codex2dsh/issues)
+- 使用中发现问题或有新想法 → [Issues](https://github.com/BigBlueBaby/codex2dsh/issues)
 - 想直接上手 → [CONTRIBUTING.md](CONTRIBUTING.md) 与 [docs/05-实现方案.md](docs/05-实现方案.md)
 - 版本历史 → [CHANGELOG.md](CHANGELOG.md)
 

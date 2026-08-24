@@ -75,9 +75,9 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/<你的用户名>/codex2dsh.git"
+    "url": "git+https://github.com/BigBlueBaby/codex2dsh.git"
   },
   "bugs": {
-    "url": "https://github.com/<你的用户名>/codex2dsh/issues"
+    "url": "https://github.com/BigBlueBaby/codex2dsh/issues"
   }
 }
