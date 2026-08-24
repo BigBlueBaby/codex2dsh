@@ -123,10 +123,10 @@ if (registerTools) {
     }
   })
 
-  test('占位工具返回友好报告而非抛错', async () => {
+  test('占位工具返回友好报告而非抛错（M4 会话委托）', async () => {
     const ctx = fakeCtx()
     registerTools(ctx, '/tmp/ledger')
-    const tool = ctx.registered.find((t) => t.name === 'migrate_codex_instructions')
+    const tool = ctx.registered.find((t) => t.name === 'migrate_codex_sessions')
     const report = await tool.execute({})
     assert.equal(report.ok, false)
     assert.ok(report.warnings[0].includes('尚未实现'))
