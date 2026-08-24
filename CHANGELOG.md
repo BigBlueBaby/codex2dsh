@@ -40,3 +40,14 @@
 - `package.json`：`dsh.client.inject: ["@deepseek-ai/dsh-client-locale"]`、`exports["./client"]`、files 含 `client/`。
 - 重构：`runMcpMigration` 抽为 `lib/mcp.mjs` 可复用编排（工具层与面板共用）。
 - 测试：79 个全绿（新增 panel 路由 4 个 + client 契约 3 个）；真实环境 status 路由验证（全部资产类别 + 台账 + 凭据）。
+
+### 需求迭代：密钥原样迁移 / 工具随迁 / 选择性迁移 / 界面升级
+
+- **密钥默认原样迁移**（用户需求）：`maskSecrets` 默认 `false`——MCP 镜像/配置建议中的 `password/token` 等敏感值**完整保留**直接可用（仅报告计数 + 头部警告）；`maskSecrets:true` 恢复脱敏。`lib/report.mjs` 的 `maskArgs/maskEnv` 增加 `mask` 开关。
+- **本地工具目录随迁**：`detectLocalTools` 识别 `command/args/env` 引用的 `~/.codex/tools/<name>`（如 mcp-toolbox），`migrateTools`（默认 true）复制到 `$DSH_HOME/codex2dsh/tools/`，`rewriteToolPaths` 把镜像路径同步重写为目标路径（幂等：目标已存在跳过）；报告新增 `kind: "tool"`。
+- **选择性迁移**：MCP 服务器与技能均支持 `include`/`exclude`（精确名 + `*` 前缀通配，如 `ccpanes-*`、`kingbase-*`）；UI 提供勾选清单（全选/清空/仅非 ccpanes）。
+- **面板路由升级**：`GET /codex2dsh/status` 增加 `selectable`（MCP 服务器名 / 技能候选 / 本地工具清单）；`POST /codex2dsh/migrate` 透传 `maskSecrets/include/exclude/migrateTools/toolsTarget`。
+- **可视化界面重构**：`client/index.js` —— 全局选项卡（密钥方式、工具随迁）、**全量迁移向导**（1 预览 → 2 选择分类+勾选 → 3 逐步执行 → 4 结果汇总）、**分类迁移卡片**（每类独立卡片：MCP/技能勾选清单 + 预览/执行 + 结果徽章）、最近结果区。
+- CLI：`mcp` 复用 `runMcpMigration`（行为与工具/面板一致），新增 `--mask-secrets/--include/--exclude/--no-tools/--tools-target`；`skills` 支持 `--include/--exclude`。
+- 测试：83 个全绿（新增工具迁移、include/exclude 过滤、密钥模式切换用例）；真实环境验证 selectable 清单（7 MCP / 27 技能 / mcp-toolbox）与 ccpanes 排除。
+- 文档同步：docs/03（密钥策略、选择性、工具随迁）、docs/09（安全边界修订）、docs/05、README、CHANGELOG。

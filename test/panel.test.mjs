@@ -96,18 +96,29 @@ test('POST /codex2dsh/migrate：mcp apply 落盘 + 幂等 + 未知动作', async
     const ws = fakeWs()
     registerPanelRoutes({}, ws, env.ledger)
     const mirrorPath = join(env.ledger, 'mcp-mirror.cordis.yml')
-    // apply：写镜像（显式 outPath 指向临时目录，避免触碰真实 $DSH_HOME）
+    // apply：写镜像（显式 outPath 指向临时目录，避免触碰真实 $DSH_HOME；默认原样迁移密钥）
     const applied = await call(ws, '/codex2dsh/migrate', fakeReq({ action: 'mcp', codexHome: env.home, apply: true, outPath: mirrorPath }))
     assert.equal(applied.status, 200)
     assert.equal(applied.payload.summary.migrated, 1)
     assert.ok(existsSync(mirrorPath))
-    assert.ok(!readFileSync(mirrorPath, 'utf8').includes('Example#2023'))
+    assert.ok(readFileSync(mirrorPath, 'utf8').includes('Example#2023'), '默认原样迁移密钥')
     // 幂等
     const again = await call(ws, '/codex2dsh/migrate', fakeReq({ action: 'mcp', codexHome: env.home, apply: true, outPath: mirrorPath }))
     assert.ok(again.payload.warnings.some((w) => w.includes('跳过')))
+    // maskSecrets 透传：脱敏
+    const maskedPath = join(env.ledger, 'mcp-masked.yml')
+    const masked = await call(ws, '/codex2dsh/migrate', fakeReq({ action: 'mcp', codexHome: env.home, apply: true, outPath: maskedPath, maskSecrets: true }))
+    assert.ok(masked.payload.ok)
+    assert.ok(!readFileSync(maskedPath, 'utf8').includes('Example#2023'))
+    // 选择性迁移：include 只留 demo-db（node_repl 运行时仍排除）
+    const selPath = join(env.ledger, 'mcp-sel.yml')
+    const sel = await call(ws, '/codex2dsh/migrate', fakeReq({ action: 'mcp', codexHome: env.home, apply: true, outPath: selPath, include: ['demo-db'] }))
+    const selContent = readFileSync(selPath, 'utf8')
+    assert.ok(selContent.includes('demo-db:'))
+    assert.ok(!selContent.includes('node_repl'))
     // 台账
     const ledger = JSON.parse(readFileSync(join(env.ledger, 'ledger.json'), 'utf8'))
-    assert.equal(ledger.length, 1)
+    assert.ok(ledger.length >= 2)
     // skills preview
     const skills = await call(ws, '/codex2dsh/migrate', fakeReq({ action: 'skills', codexHome: env.home }))
     assert.equal(skills.payload.previewed, true)

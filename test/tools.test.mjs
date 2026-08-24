@@ -91,17 +91,23 @@ if (registerTools) {
       assert.equal(dry.summary.migrated, 1) // node_repl 被排除
       assert.throws(() => readFileSync(fx.out, 'utf8'))
 
-      // 2) apply：写盘 + 脱敏
+      // 2) apply：默认原样迁移密钥（用户需求）；maskSecrets:true 时脱敏
       const applied = await tool.execute({ codexHome: fx.home, outPath: fx.out, apply: true })
       assert.equal(applied.ok, true)
       const content = readFileSync(fx.out, 'utf8')
       assert.ok(content.includes('demo-db:'))
-      assert.ok(!content.includes('Example#2023'))
-      assert.ok(content.includes('****'))
+      assert.ok(content.includes('Example#2023'), '默认模式应直接迁移密钥')
+      assert.ok(applied.warnings.some((w) => w.includes('原样迁移')))
 
-      // 3) 再次 apply：内容相同 → skipped
+      // 3) 再次 apply：内容相同 → skipped（幂等）
       const again = await tool.execute({ codexHome: fx.home, outPath: fx.out, apply: true })
       assert.ok(again.warnings.some((w) => w.includes('跳过')))
+
+      // 3b) maskSecrets:true → 脱敏（force 覆盖）
+      const masked = await tool.execute({ codexHome: fx.home, outPath: fx.out, apply: true, maskSecrets: true, force: true })
+      const maskedContent = readFileSync(fx.out, 'utf8')
+      assert.ok(!maskedContent.includes('Example#2023'))
+      assert.ok(maskedContent.includes('****'))
 
       // 4) 台账已记录
       const ledger = JSON.parse(readFileSync(join(fx.ledger, 'ledger.json'), 'utf8'))

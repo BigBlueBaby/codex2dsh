@@ -35,7 +35,7 @@ const HELP = `codex2dsh —— 把 Codex 配置迁移进 DSH（DSH 插件 CLI）
 
 用法:
   codex2dsh preview                      只读预览全部可迁移资产
-  codex2dsh mcp [--apply] [--out PATH]   MCP 镜像（默认 dry-run，--apply 写盘）
+  codex2dsh mcp [--apply] [--out PATH]   MCP 镜像（密钥默认原样迁移；工具目录随迁）
   codex2dsh skills [--apply] [--agents-home DIR] [--fix-frontmatter] [--force]
   codex2dsh instructions [--apply] [--agents-home DIR] [--force]
   codex2dsh memory [--apply] [--out DIR] [--force]
@@ -43,6 +43,15 @@ const HELP = `codex2dsh —— 把 Codex 配置迁移进 DSH（DSH 插件 CLI）
   codex2dsh sessions [--preview]         统计；委托需在 DSH 会话内调用工具
   codex2dsh doctor                       迁移体检
   codex2dsh ledger                       打印迁移台账
+
+选择性迁移（mcp / skills）:
+  --include a,b    只迁移这些项（精确名）
+  --exclude a,b    排除这些项（支持 * 前缀通配，如 ccpanes-*, kingbase-*）
+
+mcp 专属:
+  --mask-secrets   敏感值替换为 ****（默认原样迁移）
+  --no-tools       不随迁本地工具目录（默认随迁并重写路径）
+  --tools-target DIR  工具迁移目标根（默认 $DSH_HOME/codex2dsh/tools）
 
 全局参数:
   --codex-home PATH  指定 Codex 配置根（默认 ~/.codex 或 $CODEX_HOME）
@@ -55,6 +64,12 @@ function fail(msg) {
 
 function ok(msg) {
   console.log(`[codex2dsh] ${msg}`)
+}
+
+/** 解析逗号分隔列表参数：--include a,b → ['a','b'] */
+function splitList(value) {
+  if (typeof value !== 'string' || !value.trim()) return undefined
+  return value.split(',').map((s) => s.trim()).filter(Boolean)
 }
 
 function parseArgs(argv) {
@@ -87,39 +102,28 @@ async function main() {
       return
     }
     case 'mcp': {
-      const configPath = join(codexHome, 'config.toml')
-      if (!existsSync(configPath)) return fail(`未找到 ${configPath}`)
-      const source = readFileSync(configPath, 'utf8')
-      const { config } = parseCodexConfig(source)
-      const { plan, excluded, maskedCount } = buildMcpPlan(config, { excludeRuntime: true })
-      const target = flags.out ? String(flags.out) : join(ledgerDir, 'mcp-mirror.cordis.yml')
-      const content = renderMcpPlan({ plan, source: configPath })
-      const items = plan.map((s) => ({ kind: 'mcp', name: s.name, status: 'generated', target, secretsMasked: s.secretsMasked ?? 0 }))
-      for (const name of excluded) items.push({ kind: 'mcp', name, status: 'skipped', note: '运行时服务器，默认排除' })
-      if (!apply) {
-        console.log(JSON.stringify(makeReport({ items, previewed: true, warnings: maskedCount ? [`共脱敏 ${maskedCount} 处敏感值`] : [] }), null, 2))
-        console.log('\n--- 预览片段（--apply 写盘）---\n' + content)
-        return
-      }
-      const existing = existsSync(target) ? readFileSync(target, 'utf8') : null
-      const decision = decideWrite(content, existing, false)
-      if (decision === 'conflict') return fail(`目标文件已存在且内容不同（${target}）；请确认后删除或改用 --out`)
-      if (decision === 'write') {
-        mkdirSync(dirname(target), { recursive: true })
-        writeFileSync(target, content, 'utf8')
-        appendLedger(ledgerDir, { tool: 'migrate_codex_mcp', source: configPath, target, status: 'generated', maskedCount })
-        ok(`已写入 ${target}（脱敏 ${maskedCount} 处；请人工审阅后合并进 profile）`)
-      } else {
-        ok('目标内容未变化，已跳过')
-      }
+      const { runMcpMigration } = await import('../lib/mcp.mjs')
+      const report = await runMcpMigration({
+        codexHome,
+        outPath: flags.out ? String(flags.out) : undefined,
+        apply,
+        force: flags.force === true,
+        maskSecrets: flags['mask-secrets'] === true,
+        include: splitList(flags.include),
+        exclude: splitList(flags.exclude),
+        migrateTools: flags['no-tools'] !== true,
+        toolsTarget: flags['tools-target'] ? String(flags['tools-target']) : undefined,
+      }, { ledgerDir })
+      console.log(JSON.stringify(report, null, 2))
       return
     }
     case 'skills': {
       const skillsDir = join(codexHome, 'skills')
       if (!existsSync(skillsDir)) return fail(`未找到技能目录 ${skillsDir}`)
+      const sel = { include: splitList(flags.include), exclude: splitList(flags.exclude) }
       const report = apply
-        ? await migrateSkills(skillsDir, agentsHome, { fixFrontmatter: flags['fix-frontmatter'] === true, force: flags.force === true, ledgerDir })
-        : await planSkillsMigration(skillsDir, { agentsHome, fixFrontmatter: flags['fix-frontmatter'] === true })
+        ? await migrateSkills(skillsDir, agentsHome, { fixFrontmatter: flags['fix-frontmatter'] === true, force: flags.force === true, ledgerDir, ...sel })
+        : await planSkillsMigration(skillsDir, { agentsHome, fixFrontmatter: flags['fix-frontmatter'] === true, ...sel })
       console.log(JSON.stringify(report, null, 2))
       return
     }

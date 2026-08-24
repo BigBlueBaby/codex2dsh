@@ -58,15 +58,15 @@ dsh plugin --profile web add codex2dsh
 | 能力 | 工具 / 入口 | 说明 |
 | --- | --- | --- |
 | 迁移总览 | `migrate_codex_preview` | 只读扫描 `~/.codex` 全部可迁移资产，输出结构化清单与规模 |
-| MCP 镜像 | `migrate_codex_mcp` | 解析 `config.toml` 的 `[mcp_servers.*]`，生成可人工审阅合并的 DSH MCP client YAML（`mcp-mirror.cordis.yml`），**绝不自动改 profile** |
-| 技能转换 | `migrate_codex_skills` | `~/.codex/skills/<name>/SKILL.md` → `~/.agents/skills/<name>/SKILL.md`，frontmatter 适配（`kind: dsh`），脚本目录随迁，冲突加后缀消歧、内容相同幂等跳过 |
+| MCP 镜像 | `migrate_codex_mcp` | 解析 `config.toml` 的 `[mcp_servers.*]`，生成可人工审阅合并的 DSH MCP client YAML（`mcp-mirror.cordis.yml`）；**密钥默认原样迁移**（可选脱敏）；`include/exclude` 选择性迁移；**本地工具目录（mcp-toolbox 等）随迁并重写路径**；绝不自动改 profile |
+| 技能转换 | `migrate_codex_skills` | `~/.codex/skills/<name>/SKILL.md` → `~/.agents/skills/<name>/SKILL.md`，frontmatter 适配（`kind: dsh`），脚本目录随迁，冲突加后缀消歧、内容相同幂等跳过；**`include/exclude` 选择性迁移（如排除 `ccpanes-*`）** |
 | 全局指令 | `migrate_codex_instructions` | `AGENTS.md` / `instructions.md` → DSH 指令资产（项目级与全局级分开处理） |
 | 记忆迁移 | `migrate_codex_memory` | Codex `[memories]` 与记忆库 → DSH 记忆资产（只读导出、可检索） |
 | 模型与偏好 | `migrate_codex_config` | `model_provider` / `model` → `settings.yaml` 的 `agent-default-model` 建议（只读建议，人工确认） |
 | 会话历史 | `migrate_codex_sessions` | 统计 `~/.codex/sessions`（数量/体积/时间范围）并委托 `import_codex`（dsh-chat-import）导入为可续聊会话；未安装时返回安装指引 |
 | 体检报告 | `codex2dsh_doctor` | 迁移前后健康检查：已迁移/待迁移/不可迁移/密钥残留 |
-| 可视化面板 | 设置 → 插件 → **Codex 迁移** Tab | 状态总览 + 每个迁移动作「预览/执行」按钮 + 结果徽章（经 `/codex2dsh/*` 路由，与工具同一套逻辑） |
-| 安全边界 | 全部工具 | 源码只读、`password/token/key` 脱敏（`****`）、dry-run 优先、`expectedHash` 强校验、迁移台账落盘 |
+| 可视化面板 | 设置 → 插件 → **Codex 迁移** Tab | 状态总览 + 迁移选项（密钥原样/脱敏、工具随迁）+ **全量迁移向导**（预览→选择→执行→汇总）+ **分类迁移卡片**（MCP/技能勾选清单、预览/执行按钮、结果徽章） |
+| 安全边界 | 全部工具 | 源码只读、**密钥默认原样迁移**（`maskSecrets:true` 可选脱敏）、dry-run 优先、`expectedHash` 强校验、迁移台账落盘 |
 
 ---
 

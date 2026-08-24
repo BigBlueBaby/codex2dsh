@@ -77,8 +77,12 @@ check('preview 含 secret 报告', preview.items.some((i) => i.kind === 'secret'
 const mcp = await tool('migrate_codex_mcp').execute({ apply: true })
 check('mcp 镜像生成', mcp.ok === true && mcp.items.some((i) => i.name === 'demo-db'))
 const mirror = readFileSync(join(dshHome, 'codex2dsh', 'mcp-mirror.cordis.yml'), 'utf8')
-check('mcp 镜像含脱敏掩码', mirror.includes('****') && !mirror.includes('Example#2023'))
+check('mcp 镜像原样迁移密钥', mirror.includes('Example#2023'))
 check('mcp 镜像排除运行时', !mirror.includes('node_repl'))
+// maskSecrets:true → 脱敏
+await tool('migrate_codex_mcp').execute({ apply: true, maskSecrets: true, force: true })
+const maskedMirror = readFileSync(join(dshHome, 'codex2dsh', 'mcp-mirror.cordis.yml'), 'utf8')
+check('maskSecrets 脱敏生效', maskedMirror.includes('****') && !maskedMirror.includes('Example#2023'))
 
 // 3) skills apply
 const skills = await tool('migrate_codex_skills').execute({ apply: true })
@@ -112,8 +116,8 @@ check('doctor 体检', doc.ok === true && doc.items.some((i) => i.kind === 'secr
 const ledger = await tool('codex2dsh_ledger').execute({})
 check('台账存在', ledger.ok === true && Array.isArray(ledger.entries) && ledger.entries.length >= 4)
 
-// 10) 幂等复跑
-const mcp2 = await tool('migrate_codex_mcp').execute({ apply: true })
+// 10) 幂等复跑（与上一次写盘相同参数：maskSecrets:true）
+const mcp2 = await tool('migrate_codex_mcp').execute({ apply: true, maskSecrets: true })
 check('mcp 幂等', mcp2.items.every((i) => i.status !== 'generated') || mcp2.warnings.some((w) => w.includes('跳过')))
 
 // 11) 真实目录未被触碰（~/.agents 不应出现 smoke 产物）
