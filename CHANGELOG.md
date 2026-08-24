@@ -24,5 +24,11 @@
 
 ### 待实现（见 docs/08-路线图.md）
 
-- M5：npm 发布与社区市场收录。
+- M5 收尾（需用户操作）：创建 GitHub 仓库并推送、替换 `package.json` 中 `<你的用户名>` 占位、`npm publish`（release workflow 已就绪）、提交 awesome-dsh-plugin 收录 PR。
 - 可选项：面板路由（REQ-13）与斜杠命令（REQ-14）。
+
+### M5 发布准备（本轮）
+
+- `.github/workflows/release.yml`：`v*` tag 触发（门禁：check:fixtures + 单测 + L3 冒烟）→ `npm publish --provenance` → GitHub Release。
+- 真实环境 L4 演练：`codex2dsh mcp --apply` 生成真实镜像（`~/.dsh/codex2dsh/mcp-mirror.cordis.yml`，7 个服务器、6 处脱敏、运行时排除、台账落盘），待用户审阅后合并进 profile。
+- 回归修复：`[mcp_servers]` 空节不再产生 `undefined` 服务器条目（真实 config.toml 触发，preview 计数 9→8）。

@@ -1,0 +1,40 @@
+name: Release
+
+# 打 v* tag 时自动发布到 npm（发布前请确认：
+#   1. package.json 的 repository/bugs 已替换为真实 GitHub 地址
+#   2. 仓库已配置 NPM_TOKEN 与 GITHUB_TOKEN secrets
+#   3. npm test / check:fixtures / L3 冒烟全绿（本 workflow 会先跑）
+# 手动替代方案：npm version <版本> && git push --follow-tags && npm publish
+
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  publish:
+    name: publish to npm
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write # npm provenance
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - run: npm install --no-audit --no-fund
+      - name: 夹具敏感词检查
+        run: npm run check:fixtures
+      - name: 单元测试
+        run: npm test
+      - name: L3 集成冒烟
+        run: node .github/scripts/smoke.mjs
+      - name: 发布到 npm
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: 生成 GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true

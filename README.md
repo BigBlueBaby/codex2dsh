@@ -15,6 +15,8 @@
 
 > **一句话**：Codex 的配置是资产，不是牢笼。`codex2dsh` 帮你把多年积累的 MCP 服务器、技能、全局规则、记忆一键「翻译」成 DSH 原生形态，迁移全程**只读源码、脱敏密钥、dry-run 预览、人工确认**。
 
+> 🚧 **开发状态**：里程碑 M1–M4 已完成（9 个迁移工具全部可用，70+ 单测全绿，L3 冒烟通过，真实 `~/.codex` 演练验证）；M5 发布流程已就绪（npm / GitHub Actions release workflow），待创建 GitHub 仓库后即可发布分享。详见 [docs/08-路线图.md](docs/08-路线图.md)。
+
 ---
 
 ## 📥 快速开始
@@ -61,7 +63,7 @@ dsh plugin --profile web add codex2dsh
 | 全局指令 | `migrate_codex_instructions` | `AGENTS.md` / `instructions.md` → DSH 指令资产（项目级与全局级分开处理） |
 | 记忆迁移 | `migrate_codex_memory` | Codex `[memories]` 与记忆库 → DSH 记忆资产（只读导出、可检索） |
 | 模型与偏好 | `migrate_codex_config` | `model_provider` / `model` → `settings.yaml` 的 `agent-default-model` 建议（只读建议，人工确认） |
-| 会话历史 | `migrate_codex_sessions` | 委托 `import_codex`（dsh-chat-import）导入 `~/.codex/sessions/YYYY/MM/DD/rollout-*.jsonl` |
+| 会话历史 | `migrate_codex_sessions` | 统计 `~/.codex/sessions`（数量/体积/时间范围）并委托 `import_codex`（dsh-chat-import）导入为可续聊会话；未安装时返回安装指引 |
 | 体检报告 | `codex2dsh_doctor` | 迁移前后健康检查：已迁移/待迁移/不可迁移/密钥残留 |
 | 安全边界 | 全部工具 | 源码只读、`password/token/key` 脱敏（`****`）、dry-run 优先、`expectedHash` 强校验、迁移台账落盘 |
 

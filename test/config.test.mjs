@@ -70,3 +70,17 @@ test('损坏/空输入不抛错', () => {
   assert.ok(Array.isArray(errors))
   assert.deepEqual(config.mcpServers, {})
 })
+
+test('回归：空节 [mcp_servers] / [model_providers] 不产生 undefined 键', () => {
+  const { config } = parseCodexConfig([
+    '[mcp_servers]',
+    '[mcp_servers.demo]',
+    'command = "npx"',
+    '[model_providers]',
+    '[model_providers.custom]',
+    'name = "x"',
+  ].join('\n'))
+  assert.deepEqual(Object.keys(config.mcpServers), ['demo'])
+  assert.deepEqual(Object.keys(config.modelProviders), ['custom'])
+  assert.equal(config.mcpServers['undefined'], undefined)
+})
