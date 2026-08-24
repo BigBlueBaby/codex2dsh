@@ -1,0 +1,75 @@
+{
+  "name": "codex2dsh",
+  "version": "0.1.0",
+  "description": "把 Codex（OpenAI Codex CLI / Desktop）的 MCP、技能、全局配置、记忆以适配 DSH 的形式迁移进 DeepSeek Harness（DSH 插件）",
+  "type": "module",
+  "main": "./index.mjs",
+  "types": "./index.d.ts",
+  "bin": {
+    "codex2dsh": "./bin/codex2dsh.mjs"
+  },
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.mjs"
+    },
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.mjs",
+    "index.d.ts",
+    "lib/*.mjs",
+    "bin",
+    "cordis.patch.yml",
+    "docs/**",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1",
+    "@deepseek-ai/dsh-tools": "^0.1.0-rc.6",
+    "@deepseek-ai/schemastery": ">=3.0.0"
+  },
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "test": "node --test \"test/*.test.mjs\"",
+    "coverage": "node --test --experimental-test-coverage --test-coverage-lines=75 \"test/*.test.mjs\"",
+    "lint": "eslint .",
+    "check:fixtures": "node .github/scripts/check-fixtures.mjs",
+    "prepack": "npm run check:fixtures && npm test",
+    "prepublishOnly": "npm test && npm pack --dry-run"
+  },
+  "keywords": [
+    "deepseek-harness",
+    "dsh-plugin",
+    "dsh",
+    "codex",
+    "codex-cli",
+    "migration",
+    "mcp",
+    "skills",
+    "agents",
+    "config",
+    "memory"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@deepseek-ai/dsh-tools": "^0.1.0-rc.6"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/<你的用户名>/codex2dsh.git"
+  },
+  "bugs": {
+    "url": "https://github.com/<你的用户名>/codex2dsh/issues"
+  }
+}

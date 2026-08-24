@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    name: test (node ${{ matrix.node }} / ${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        node: [22, 24]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - name: 安装依赖
+        run: npm install --no-audit --no-fund
+      - name: 夹具敏感词检查（防真实凭据入库）
+        run: npm run check:fixtures
+      - name: 单元测试
+        run: npm test
+      - name: 打包自检（包体含 cordis.patch.yml、无越界）
+        run: npm pack --dry-run

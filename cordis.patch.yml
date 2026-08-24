@@ -1,0 +1,5 @@
+# codex2dsh 插件组合补丁：把本插件插入 profile 的层栈。
+# 安装方式：dsh plugin --profile <name> add codex2dsh（或 -w link:<本仓库路径>）
+- insert:
+    - id: codex2dsh
+      name: codex2dsh

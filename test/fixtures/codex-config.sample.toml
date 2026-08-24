@@ -1,0 +1,80 @@
+# 脱敏 Codex config.toml 夹具（结构对照本机实测，全部示例值/掩码，禁止写入真实凭据）
+
+model_provider = "custom"
+model = "deepseek-v4-flash"
+model_reasoning_effort = "max"
+disable_response_storage = true
+
+notify = [ "C:\\Users\\example\\AppData\\Local\\OpenAI\\Codex\\runtimes\\cua_node\\bin\\codex-computer-use.exe", "turn-ended" ]
+
+[model_providers.custom]
+name = "Hi-Code"
+base_url = "http://127.0.0.1:15721/v1"
+wire_api = "responses"
+requires_openai_auth = true
+experimental_bearer_token = "PROXY_MANAGED"
+
+# ── MCP 服务器（可迁移）──────────────────────────────────────────
+[mcp_servers."google-mcp-toolbox"]
+type = "stdio"
+command = 'C:\Users\example\.codex\tools\mcp-toolbox\toolbox.exe'
+args = ["--config", 'C:\Users\example\.codex\tools\mcp-toolbox\tools.yaml', "--stdio", "--disable-reload"]
+startup_timeout_sec = 120
+
+[mcp_servers."kingbase-demo-db"]
+type = "stdio"
+command = "npx"
+args = ["universal-db-mcp", "--permission-mode", "readwrite", "--type", "kingbase", "--host", "192.168.10.99", "--port", "54322", "--user", "system", "--password", "Example#2023", "--database", "demo"]
+startup_timeout_sec = 120
+
+[mcp_servers."oracle-demo-db"]
+type = "stdio"
+command = "npx"
+args = ["universal-db-mcp", "--type", "oracle", "--host", "192.168.10.100", "--port", "1521", "--user", "demo_user", "--password", "demo#_2019", "--database", "orcl", "--oracle-client-path", 'D:\app\example\product\11.2.0\dbhome_1\BIN']
+startup_timeout_sec = 120
+
+[mcp_servers."oracle-demo-db".env]
+PATH = 'D:\app\example\product\11.2.0\dbhome_1\BIN;${PATH}'
+ORACLE_HOME = 'D:\app\example\product\11.2.0\dbhome_1'
+
+# ── 运行时服务器（应被默认排除）──────────────────────────────────
+[mcp_servers.node_repl]
+args = []
+command = 'C:\Users\example\AppData\Local\OpenAI\Codex\runtimes\cua_node\bin\node_repl.exe'
+startup_timeout_sec = 120
+[mcp_servers.node_repl.env]
+CODEX_CLI_PATH = 'C:\Users\example\AppData\Local\OpenAI\Codex\bin\codex.exe'
+SKY_CUA_NATIVE_PIPE = "1"
+
+# ── 市场与插件（仅报告）──────────────────────────────────────────
+[marketplaces.openai-bundled]
+source_type = "local"
+source = '\\?\C:\Users\example\.codex\.tmp\bundled-marketplaces\openai-bundled'
+
+[plugins."browser@openai-bundled"]
+enabled = true
+[plugins."computer-use@openai-bundled"]
+enabled = true
+
+# ── 平台与特性 ───────────────────────────────────────────────────
+[windows]
+sandbox = "elevated"
+[features]
+memories = true
+js_repl = false
+
+# ── 项目信任 ─────────────────────────────────────────────────────
+[projects.'d:\projects\demo-backend']
+trust_level = "trusted"
+[projects.'d:\projects\demo-frontend']
+trust_level = "trusted"
+
+# ── 记忆 ─────────────────────────────────────────────────────────
+[memories]
+generate_memories = true
+use_memories = true
+
+# ── 桌面外观（不迁移）────────────────────────────────────────────
+[desktop]
+selected-avatar-id = "custom:example"
+sansFontSize = 16

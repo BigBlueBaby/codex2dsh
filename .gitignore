@@ -1,0 +1,25 @@
+# 依赖与构建产物
+node_modules/
+dist/
+lib/*.js.map
+*.tgz
+
+# 测试与运行产物
+coverage/
+.tmp/
+*.log
+
+# 本地环境
+.env
+.env.*
+!.env.example
+
+# 编辑器 / 系统
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# 用户本机迁移产物（绝不入库：可能含密钥）
+migrate-output/
+*.migration.json
