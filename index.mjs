@@ -2,10 +2,10 @@
 //
 // 把 Codex（~/.codex）的 MCP / 技能 / 全局指令 / 记忆 / 模型偏好
 // 以「适配 DSH」的形式迁移进 DeepSeek Harness。消费 host 的 fs / tools 服务，
-// webServer / commands 为可选服务（headless / CLI 会话不挂载，插件照常激活）。
+// webServer / commands 为可选服务（headless / CLI 会话不挂载，插件照常激活）；
+// Browser 侧 client（client/index.js）注册「设置 → 插件 → Codex 迁移」Tab。
 //
 // 职责拆分见 docs/05-实现方案.md；映射规范见 docs/03-映射规范.md。
-// 当前为骨架：registerTools 只注册已实现的工具，其余随里程碑 M1–M4 逐步补齐。
 
 import { resolveLedgerDir } from './lib/paths.mjs'
 import { registerTools } from './lib/tools.mjs'

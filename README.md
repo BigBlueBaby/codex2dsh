@@ -65,6 +65,7 @@ dsh plugin --profile web add codex2dsh
 | 模型与偏好 | `migrate_codex_config` | `model_provider` / `model` → `settings.yaml` 的 `agent-default-model` 建议（只读建议，人工确认） |
 | 会话历史 | `migrate_codex_sessions` | 统计 `~/.codex/sessions`（数量/体积/时间范围）并委托 `import_codex`（dsh-chat-import）导入为可续聊会话；未安装时返回安装指引 |
 | 体检报告 | `codex2dsh_doctor` | 迁移前后健康检查：已迁移/待迁移/不可迁移/密钥残留 |
+| 可视化面板 | 设置 → 插件 → **Codex 迁移** Tab | 状态总览 + 每个迁移动作「预览/执行」按钮 + 结果徽章（经 `/codex2dsh/*` 路由，与工具同一套逻辑） |
 | 安全边界 | 全部工具 | 源码只读、`password/token/key` 脱敏（`****`）、dry-run 优先、`expectedHash` 强校验、迁移台账落盘 |
 
 ---

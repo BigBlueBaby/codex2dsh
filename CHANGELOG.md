@@ -25,10 +25,18 @@
 ### 待实现（见 docs/08-路线图.md）
 
 - M5 收尾（需用户操作）：创建 GitHub 仓库并推送、替换 `package.json` 中 `<你的用户名>` 占位、`npm publish`（release workflow 已就绪）、提交 awesome-dsh-plugin 收录 PR。
-- 可选项：面板路由（REQ-13）与斜杠命令（REQ-14）。
+- 可选项：斜杠命令（REQ-14）。
 
 ### M5 发布准备（本轮）
 
 - `.github/workflows/release.yml`：`v*` tag 触发（门禁：check:fixtures + 单测 + L3 冒烟）→ `npm publish --provenance` → GitHub Release。
 - 真实环境 L4 演练：`codex2dsh mcp --apply` 生成真实镜像（`~/.dsh/codex2dsh/mcp-mirror.cordis.yml`，7 个服务器、6 处脱敏、运行时排除、台账落盘），待用户审阅后合并进 profile。
 - 回归修复：`[mcp_servers]` 空节不再产生 `undefined` 服务器条目（真实 config.toml 触发，preview 计数 9→8）。
+
+### 可视化面板（设置 → 插件 → Codex 迁移）
+
+- `lib/panel.mjs` —— webServer 路由：`GET /codex2dsh/status`（资产+台账+凭据）、`POST /codex2dsh/preview`（全资产预览）、`POST /codex2dsh/migrate`（按 action 执行/预览，与工具面同一套 lib 编排）；headless 不挂载。
+- `client/index.js` —— Browser client（`window.__ModuleLoader__.load` 手写 CJS factory，零构建）：注册 `settings.plugins.tab` 槽位，提供状态总览（资产清单/台账计数/凭据警告）、7 个迁移动作的「预览/执行」按钮（执行带确认）、结果徽章（migrated/skipped/invalid/previewed）与警告列表；`settingsScope` 缺席时优雅跳过。
+- `package.json`：`dsh.client.inject: ["@deepseek-ai/dsh-client-locale"]`、`exports["./client"]`、files 含 `client/`。
+- 重构：`runMcpMigration` 抽为 `lib/mcp.mjs` 可复用编排（工具层与面板共用）。
+- 测试：79 个全绿（新增 panel 路由 4 个 + client 契约 3 个）；真实环境 status 路由验证（全部资产类别 + 台账 + 凭据）。

@@ -168,3 +168,57 @@ dsh plugin --profile web remove codex2dsh   # 或从 profile bundles 移除 inse
 ## 9. 与 dsh-chat-import 的类型面对齐
 
 `index.d.ts` 声明工具调用面（`ToolSurface`）而非假模块导出（参考插件做法），让 TS 调用方有参数/返回类型提示，同时保持零构建。我们同样维护 `index.d.ts`，并在 `docs/05-实现方案.md` 中给出每个工具的 `parameters` 与返回值类型。
+
+## 10. Browser client 注入契约（可视化面板）
+
+「设置 → 插件 → Codex 迁移」Tab 由 client 侧实现（参考 dsh-chat-import / dshmarket 同款机制）：
+
+### 10.1 包声明
+
+```jsonc
+// package.json
+"dsh": {
+  "bundle": { "patch": "./cordis.patch.yml" },
+  "client": { "inject": ["@deepseek-ai/dsh-client-locale"], "platform": "web" }
+},
+"exports": { "./client": "./client/index.js" }
+```
+
+- `dsh.client.inject`：声明需要注入进 web bundle 的 client 包（本项目只用 locale）；
+- `exports["./client"]`：client 入口（`client/index.js`，手写 CJS factory，零构建）。
+
+### 10.2 client 入口形态（`window.__ModuleLoader__.load`）
+
+```js
+window.__ModuleLoader__.load({
+  id: 'codex2dsh',
+  factory: (require) => {
+    const React = require('react')           // host 提供（唯一外部依赖）
+    // ...
+    module.exports = { name, inject: ['slots', 'locale'], apply }
+    return module.exports
+  },
+})
+```
+
+### 10.3 服务与槽位
+
+| 服务 | 用途 |
+| --- | --- |
+| `locale`（注入声明） | `ctx.effect(() => locale.register(NS, { zh, en }))` 注册面板字典，随 DSH web 语言切换 |
+| `slots`（注入声明） | `ctx.slots.inject('settings.plugins.tab', cb)` 注册设置页 Tab |
+| `settingsScope`（可选，回调内 resolve） | `ctx.get('settingsScope')` → `bind({ namespace })`；缺席时跳过注册（无设置页的 profile 不报错） |
+
+槽位 `settings.plugins.tab`（由 ui-settings-plugins 声明）：`ctx.slots.register({ name, id, order, label: () => t(...), locale, inject: () => ({ scope }) }, () => h(Tab, { t }))`。
+
+### 10.4 面板路由（后端）
+
+client 通过 fetch 调用后端路由（`lib/panel.mjs`，经 `ctx.inject(['webServer'])` 延后注册，headless 不挂载）：
+
+| 路由 | 语义 |
+| --- | --- |
+| `GET /codex2dsh/status` | 资产清单 + 台账计数 + 凭据文件（只读） |
+| `POST /codex2dsh/preview` | 全资产预览（零副作用） |
+| `POST /codex2dsh/migrate` | `{ action, apply?, ... }` 执行/预览单个迁移（与工具面同一套 lib 编排） |
+
+webServer 路由形态：`ws.register({ kind: 'exact', path, handler: async (req, res) => {...} })`，`res.writeHead/end` 输出 JSON。

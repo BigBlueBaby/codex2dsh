@@ -13,6 +13,7 @@
       "types": "./index.d.ts",
       "default": "./index.mjs"
     },
+    "./client": "./client/index.js",
     "./cordis.patch.yml": "./cordis.patch.yml",
     "./package.json": "./package.json"
   },
@@ -20,6 +21,7 @@
     "index.mjs",
     "index.d.ts",
     "lib/*.mjs",
+    "client",
     "bin",
     "cordis.patch.yml",
     "docs/**",
@@ -30,6 +32,12 @@
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-locale"
+      ],
+      "platform": "web"
     }
   },
   "peerDependencies": {
