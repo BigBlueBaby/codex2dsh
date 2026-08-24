@@ -62,6 +62,9 @@ test('parseBody 支持 req.body 与流两种形态', async () => {
 
 test('GET /codex2dsh/status 返回资产 + 台账计数 + 凭据', async () => {
   const env = makeEnv()
+  // status handler 用 resolveCodexHome()（读 CODEX_HOME env）——必须隔离，否则扫到真实 ~/.codex
+  const oldHome = process.env.CODEX_HOME
+  process.env.CODEX_HOME = env.home
   try {
     const ws = fakeWs()
     registerPanelRoutes({}, ws, env.ledger)
@@ -72,6 +75,8 @@ test('GET /codex2dsh/status 返回资产 + 台账计数 + 凭据', async () => {
     assert.ok(payload.secrets.some((s) => s.name === 'auth.json'))
     assert.equal(payload.ledgerCount, 0)
   } finally {
+    if (oldHome === undefined) delete process.env.CODEX_HOME
+    else process.env.CODEX_HOME = oldHome
     env.cleanup()
   }
 })

@@ -112,16 +112,17 @@ test('rewriteToolPaths 重写 command/args/env 中的工具路径', () => {
   const plan = [
     {
       name: 'toolbox',
-      command: 'C:\\codex-home\\tools\\mcp-toolbox\\toolbox.exe',
+      command: join('C:', 'codex-home', 'tools', 'mcp-toolbox', 'toolbox.exe'),
       args: ['--config', 'C:/codex-home/tools/mcp-toolbox/tools.yaml'],
-      env: { PATH: 'C:\\codex-home\\tools\\mcp-toolbox\\bin;${PATH}' },
+      env: { PATH: join('C:', 'codex-home', 'tools', 'mcp-toolbox', 'bin') + ';${PATH}' },
     },
   ]
-  const tools = [{ name: 'mcp-toolbox', dir: 'C:\\codex-home\\tools\\mcp-toolbox', size: 10 }]
-  rewriteToolPaths(plan, 'C:\\codex-home', 'D:\\dsh\\codex2dsh\\tools', tools)
-  assert.equal(plan[0].command, 'D:\\dsh\\codex2dsh\\tools\\mcp-toolbox\\toolbox.exe')
-  assert.equal(plan[0].args[1], 'D:/dsh/codex2dsh/tools/mcp-toolbox/tools.yaml')
-  assert.equal(plan[0].env.PATH, 'D:\\dsh\\codex2dsh\\tools\\mcp-toolbox\\bin;${PATH}')
+  const tools = [{ name: 'mcp-toolbox', dir: join('C:', 'codex-home', 'tools', 'mcp-toolbox'), size: 10 }]
+  const toolsTarget = join('D:', 'dsh', 'codex2dsh', 'tools')
+  rewriteToolPaths(plan, join('C:', 'codex-home'), toolsTarget, tools)
+  assert.equal(plan[0].command, join(toolsTarget, 'mcp-toolbox', 'toolbox.exe'))
+  assert.equal(plan[0].args[1], join(toolsTarget, 'mcp-toolbox', 'tools.yaml').replace(/\\/g, '/'))
+  assert.equal(plan[0].env.PATH, join(toolsTarget, 'mcp-toolbox', 'bin') + ';${PATH}')
 })
 
 test('runMcpMigration：工具目录随迁 + 镜像路径重写 + 原样密钥', async () => {

@@ -37,12 +37,14 @@ test('回归：resolveAgentsHome 必须接受显式参数（防止写入 ~/.agen
 
 test('resolveDshHome / resolveCodex2dshHome / resolveMcpMirrorPath', () => {
   const old = process.env.DSH_HOME
-  process.env.DSH_HOME = 'D:\\dsh-home'
+  // 用 join 构造期望值：Linux 用 / ，Windows 用 \（跨平台正确）
+  const dsh = join('D:', 'dsh-home')
+  process.env.DSH_HOME = dsh
   try {
-    assert.equal(resolveDshHome(), 'D:\\dsh-home')
-    assert.equal(resolveCodex2dshHome(), 'D:\\dsh-home\\codex2dsh')
-    assert.equal(resolveMcpMirrorPath(), 'D:\\dsh-home\\codex2dsh\\mcp-mirror.cordis.yml')
-    assert.equal(resolveMcpMirrorPath('D:\\out\\x.yml'), 'D:\\out\\x.yml')
+    assert.equal(resolveDshHome(), dsh)
+    assert.equal(resolveCodex2dshHome(), join(dsh, 'codex2dsh'))
+    assert.equal(resolveMcpMirrorPath(), join(dsh, 'codex2dsh', 'mcp-mirror.cordis.yml'))
+    assert.equal(resolveMcpMirrorPath(join('D:', 'out', 'x.yml')), join('D:', 'out', 'x.yml'))
   } finally {
     if (old === undefined) delete process.env.DSH_HOME
     else process.env.DSH_HOME = old
