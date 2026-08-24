@@ -31,8 +31,8 @@ window.__ModuleLoader__.load({
         "option.title": "迁移选项",
         "option.maskSecrets": "密钥脱敏（****）",
         "option.maskSecrets.desc": "关闭 = 按原样迁移密钥（默认）；开启 = 敏感值替换为 ****",
-        "option.migrateTools": "随迁本地工具目录（mcp-toolbox 等）",
-        "option.migrateTools.desc": "复制 ~/.codex/tools 下被引用的工具并重写镜像路径",
+        "option.migrateTools": "随迁本地工具目录（~/.codex/tools 下被引用的工具）",
+        "option.migrateTools.desc": "复制被 MCP 服务器引用的本地工具目录并重写镜像路径",
         "wizard.title": "全量迁移向导",
         "wizard.start": "开始全量迁移",
         "wizard.step1": "预览",
@@ -59,6 +59,9 @@ window.__ModuleLoader__.load({
         "select.all": "全选",
         "select.none": "清空",
         "select.keep": "已选 {n} 项",
+        "select.excludePrefix": "排除前缀",
+        "select.excludePlaceholder": "输入要排除的技能前缀，逗号分隔（如 ccpanes-、hatch-）",
+        "select.applyExclude": "按前缀排除",
         "action.preview": "预览",
         "action.apply": "执行",
         "action.confirm": "确定要执行「{label}」吗？将写入迁移产物；源文件不会被修改。",
@@ -94,8 +97,8 @@ window.__ModuleLoader__.load({
         "option.title": "Options",
         "option.maskSecrets": "Mask secrets (****)",
         "option.maskSecrets.desc": "Off = migrate secrets as-is (default); On = replace sensitive values with ****",
-        "option.migrateTools": "Migrate local tool dirs (mcp-toolbox etc.)",
-        "option.migrateTools.desc": "Copy referenced ~/.codex/tools dirs and rewrite mirror paths",
+        "option.migrateTools": "Migrate local tool dirs (tools referenced under ~/.codex/tools)",
+        "option.migrateTools.desc": "Copy local tool dirs referenced by MCP servers and rewrite mirror paths",
         "wizard.title": "Full migration wizard",
         "wizard.start": "Start full migration",
         "wizard.step1": "Preview",
@@ -122,6 +125,9 @@ window.__ModuleLoader__.load({
         "select.all": "All",
         "select.none": "None",
         "select.keep": "{n} selected",
+        "select.excludePrefix": "Exclude prefix",
+        "select.excludePlaceholder": "Skill name prefixes to exclude, comma-separated (e.g. ccpanes-)",
+        "select.applyExclude": "Exclude by prefix",
         "action.preview": "Preview",
         "action.apply": "Apply",
         "action.confirm": "Run \"{label}\"? Artifacts will be written; sources are never modified.",
@@ -226,6 +232,7 @@ window.__ModuleLoader__.load({
       const [migrateTools, setMigrateTools] = useState(true);
       const [selMCP, setSelMCP] = useState(null);
       const [selSkills, setSelSkills] = useState(null);
+      const [excludePrefixText, setExcludePrefixText] = useState("");
       const [wizard, setWizard] = useState(null);
 
       const load = useCallback(async () => {
@@ -467,11 +474,24 @@ window.__ModuleLoader__.load({
                 h("div", { style: { ...S.row, gap: 10 } }, [
                   h("button", { style: S.btnGhost, onClick: () => setSelSkills(new Set(skillNames)) }, t("select.all")),
                   h("button", { style: S.btnGhost, onClick: () => setSelSkills(new Set()) }, t("select.none")),
+                  h("span", { style: S.note }, fmt(t("select.keep"), { n: selSkills ? selSkills.size : 0 })),
+                ]),
+                h("div", { key: "exclude-prefix", style: { ...S.row, gap: 6, marginBottom: 4 } }, [
+                  h("span", { style: S.note }, t("select.excludePrefix")),
+                  h("input", {
+                    value: excludePrefixText,
+                    onChange: (e) => setExcludePrefixText(e.target.value),
+                    placeholder: t("select.excludePlaceholder"),
+                    style: { flex: 1, minWidth: 180, padding: "3px 8px", borderRadius: 6, border: "1px solid #cbd5e0", fontSize: 12 },
+                  }),
                   h("button", {
                     style: S.btnGhost,
-                    onClick: () => setSelSkills(new Set(skillNames.filter((n) => !n.startsWith("ccpanes-")))),
-                  }, "仅非 ccpanes"),
-                  h("span", { style: S.note }, fmt(t("select.keep"), { n: selSkills ? selSkills.size : 0 })),
+                    onClick: () => {
+                      const prefixes = excludePrefixText.split(",").map((s) => s.trim()).filter(Boolean);
+                      if (prefixes.length === 0) return;
+                      setSelSkills(new Set(skillNames.filter((n) => !prefixes.some((p) => n.startsWith(p)))));
+                    },
+                  }, t("select.applyExclude")),
                 ]),
                 skillNames.map((name) =>
                   h("label", { key: name, style: { ...S.row, cursor: "pointer", paddingLeft: 4 } }, [
