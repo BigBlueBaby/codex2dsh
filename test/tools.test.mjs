@@ -4,7 +4,7 @@
 
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync, readFileSync } from 'node:fs'
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync, readFileSync, existsSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -126,9 +126,42 @@ if (registerTools) {
   test('占位工具返回友好报告而非抛错', async () => {
     const ctx = fakeCtx()
     registerTools(ctx, '/tmp/ledger')
-    const tool = ctx.registered.find((t) => t.name === 'migrate_codex_skills')
+    const tool = ctx.registered.find((t) => t.name === 'migrate_codex_instructions')
     const report = await tool.execute({})
     assert.equal(report.ok, false)
     assert.ok(report.warnings[0].includes('尚未实现'))
+  })
+
+  test('migrate_codex_skills：dry-run → apply → 幂等 skip', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'codex2dsh-toolskill-'))
+    const home = join(root, 'codex-home')
+    mkdirSync(join(home, 'skills', 'demo-skill'), { recursive: true })
+    writeFileSync(join(home, 'skills', 'demo-skill', 'SKILL.md'),
+      '---\nname: demo-skill\ndescription: 演示。\n---\n\n正文。\n', 'utf8')
+    const ledger = join(root, 'dsh-home', 'codex2dsh')
+    const agents = join(root, 'agents')
+    try {
+      const ctx = fakeCtx()
+      registerTools(ctx, ledger)
+      const tool = ctx.registered.find((t) => t.name === 'migrate_codex_skills')
+
+      // dry-run：不写盘
+      const dry = await tool.execute({ codexHome: home, agentsHome: agents })
+      assert.equal(dry.previewed, true)
+      assert.equal(existsSync(join(agents, 'skills')), false)
+
+      // apply：落盘
+      const applied = await tool.execute({ codexHome: home, agentsHome: agents, apply: true })
+      assert.equal(applied.items.filter((i) => i.status === 'migrated').length, 1)
+      const target = readFileSync(join(agents, 'skills', 'demo-skill', 'SKILL.md'), 'utf8')
+      assert.ok(target.includes('kind: dsh'))
+
+      // 幂等
+      const again = await tool.execute({ codexHome: home, agentsHome: agents, apply: true })
+      assert.equal(again.items.filter((i) => i.status === 'migrated').length, 0)
+      assert.ok(again.items.some((i) => i.status === 'skipped' && i.note.includes('幂等')))
+    } finally {
+      rmSync(root, { recursive: true, force: true })
+    }
   })
 }
