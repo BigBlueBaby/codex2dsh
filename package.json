@@ -71,6 +71,10 @@
   ],
   "license": "MIT",
   "homepage": "https://github.com/BigBlueBaby/codex2dsh",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
   "devDependencies": {
     "@deepseek-ai/dsh-tools": "^0.1.0-rc.6"
   },
