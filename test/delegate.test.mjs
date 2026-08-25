@@ -73,7 +73,13 @@ test('有 import_codex → 委托（透传参数）+ 台账', async () => {
     name: 'import_codex',
     async execute(args) {
       calls.push(args)
-      return { ok: true, sessionIds: ['s1', 's2'], summary: { imported: 2 } }
+      return {
+        ok: true, total: 2, imported: 2,
+        results: [
+          { path: 'a.jsonl', status: 'imported', sessionId: 's1' },
+          { path: 'b.jsonl', status: 'imported', sessionId: 's2' },
+        ],
+      }
     },
   }
   try {
@@ -112,6 +118,80 @@ test('preview 模式：委托透传 preview 且不写台账', async () => {
     assert.ok(r.items.some((i) => i.name === 'import_codex' && i.status === 'previewed'))
     assert.equal(calls[0].preview, true)
     assert.equal(readLedgerCount(fx.ledger), 0)
+  } finally {
+    fx.cleanup()
+  }
+})
+
+test('委托成功后自动补标题（best-effort）：host 内有 sessionPersistence 时执行', async () => {
+  const fx = makeSessionsFixture()
+  const importedEvent = {
+    type: 'session/imported', seq: 0, time: 1, ignorable: true,
+    data: { tool: 'codex', sourceId: 's1', sourcePath: null, importedAt: 2 },
+  }
+  const userEvent = {
+    type: 'user/message', seq: 1, time: 1,
+    data: { turn: 1, message: { id: 'm1', role: 'user', content: [{ type: 'text', text: '你好' }], source: { kind: 'user' } } },
+  }
+  const headers = [{ id: 'import-s1', events: [importedEvent, userEvent] }]
+  const appended = []
+  const fakeImport = {
+    name: 'import_codex',
+    async execute() {
+      return { ok: true, total: 1, imported: 1, results: [{ path: 'x.jsonl', status: 'imported', sessionId: 'import-s1' }] }
+    },
+  }
+  const ctx = {
+    tools: { get: () => fakeImport },
+    get: (name) => {
+      if (name === 'sessionPersistence') {
+        return {
+          async list() { return headers },
+          async readFrom(id) {
+            const h = headers.find((x) => x.id === id)
+            return { meta: { id }, events: h ? h.events : [] }
+          },
+          async append(id, events) { appended.push({ id, events }) },
+        }
+      }
+      if (name === 'sessions') return { get: () => undefined }
+      if (name === 'sessionProjectionCache') return { coldSnapshot: async () => {} }
+      return undefined
+    },
+  }
+  try {
+    const home = join(fx.home, '..', 'codex-home')
+    mkdirSync(home, { recursive: true })
+    writeFileSync(join(home, 'session_index.jsonl'), '{"id":"s1","thread_name":"Codex 线程标题"}\n', 'utf8')
+    const r = await planSessionsMigration(fx.home, ctx, { ledgerDir: fx.ledger })
+    const fix = r.items.find((i) => i.name === 'title-backfill')
+    assert.ok(fix, '应包含 title-backfill 项')
+    assert.equal(fix.status, 'migrated')
+    assert.ok(fix.note.includes('已补标题 1 个'))
+    assert.equal(appended.length, 1)
+    assert.equal(appended[0].id, 'import-s1')
+    assert.equal(appended[0].events[0].data.title, 'Codex 线程标题')
+    // 台账仍是委托记录（标题回填不额外记账）
+    assert.equal(readLedgerCount(fx.ledger), 1)
+  } finally {
+    fx.cleanup()
+  }
+})
+
+test('委托成功后无 host ctx（CLI 形态）→ 不执行回填、不报错', async () => {
+  const fx = makeSessionsFixture()
+  const fakeImport = {
+    name: 'import_codex',
+    async execute() {
+      return { ok: true, sessionIds: ['import-s1'], summary: { imported: 1 } }
+    },
+  }
+  try {
+    const ctx = { tools: { get: () => fakeImport } } // 无 get 方法
+    const r = await planSessionsMigration(fx.home, ctx, { ledgerDir: fx.ledger })
+    assert.ok(r.items.some((i) => i.name === 'import_codex' && i.status === 'delegated'))
+    assert.ok(!r.items.some((i) => i.name === 'title-backfill'))
+    assert.equal(r.ok, true)
   } finally {
     fx.cleanup()
   }

@@ -49,14 +49,14 @@ if (registerTools) {
     return { home, ledger, out, cleanup: () => rmSync(root, { recursive: true, force: true }) }
   }
 
-  test('registerTools 注册全部 9 个工具', () => {
+  test('registerTools 注册全部 10 个工具', () => {
     const ctx = fakeCtx()
     registerTools(ctx, '/tmp/ledger')
     const names = ctx.registered.map((t) => t.name)
     for (const n of [
       'migrate_codex_preview', 'migrate_codex_mcp', 'migrate_codex_skills',
       'migrate_codex_instructions', 'migrate_codex_memory', 'migrate_codex_config',
-      'migrate_codex_sessions', 'codex2dsh_doctor', 'codex2dsh_ledger',
+      'migrate_codex_sessions', 'codex2dsh_fix_titles', 'codex2dsh_doctor', 'codex2dsh_ledger',
     ]) {
       assert.ok(names.includes(n), `缺少工具 ${n}`)
     }

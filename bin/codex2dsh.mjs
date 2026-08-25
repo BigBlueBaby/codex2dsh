@@ -41,6 +41,8 @@ const HELP = `codex2dsh —— 把 Codex 配置迁移进 DSH（DSH 插件 CLI）
   codex2dsh memory [--apply] [--out DIR] [--force]
   codex2dsh config [--apply] [--out PATH] [--force]
   codex2dsh sessions [--preview]         统计；委托需在 DSH 会话内调用工具
+  codex2dsh titles [--dsh-home PATH]     只读预览：哪些已导入 Codex 会话缺标题、
+                                         将补什么标题（写盘请在 DSH 面板/工具内执行）
   codex2dsh doctor                       迁移体检
   codex2dsh ledger                       打印迁移台账
 
@@ -158,6 +160,19 @@ async function main() {
       console.log(JSON.stringify(report, null, 2))
       if (report.items.some((i) => i.name === 'delegation' && i.status === 'skipped')) {
         ok('提示：正式委托导入请在 DSH 会话内调用 migrate_codex_sessions（需已安装 dsh-chat-import）')
+      }
+      return
+    }
+    case 'titles': {
+      // 只读预览：直接读 DSH 会话日志工件，报告缺标题的 codex 导入会话与将补标题。
+      // 不直写日志文件——写盘必须走宿主 sessionPersistence（面板「修复标题」/
+      // codex2dsh_fix_titles 工具），避免与 DSH 运行中的写游标并发冲突。
+      const { scanTitleBackfillStandalone } = await import('../lib/title.mjs')
+      const dshHome = flags['dsh-home'] ? String(flags['dsh-home']) : resolveDshHome()
+      const plan = await scanTitleBackfillStandalone(codexHome, join(dshHome, 'sessions'))
+      console.log(JSON.stringify(plan, null, 2))
+      if (plan.planned.length > 0) {
+        ok(`提示：${plan.planned.length} 个会话将补标题；实际写盘请在 DSH 面板「会话导入 → 修复标题」或调用 codex2dsh_fix_titles 工具`)
       }
       return
     }

@@ -56,6 +56,8 @@ window.__ModuleLoader__.load({
         "cat.sessions": "会话导入",
         "cat.doctor": "迁移体检",
         "cat.tools": "本地工具",
+        "action.fixTitles": "修复标题",
+        "action.fixTitles.confirm": "为已导入的 Codex 会话补钉标题（来自 Codex 线程标题或首条真实提问；已有标题/已改名的会话跳过）？",
         "select.all": "全选",
         "select.none": "清空",
         "select.keep": "已选 {n} 项",
@@ -122,6 +124,8 @@ window.__ModuleLoader__.load({
         "cat.sessions": "Sessions",
         "cat.doctor": "Doctor",
         "cat.tools": "Local tools",
+        "action.fixTitles": "Fix titles",
+        "action.fixTitles.confirm": "Pin session/title events for imported Codex sessions (from Codex thread titles or first real prompt; sessions that already have a title are skipped)?",
         "select.all": "All",
         "select.none": "None",
         "select.keep": "{n} selected",
@@ -284,6 +288,24 @@ window.__ModuleLoader__.load({
           load();
         }
       }, [t, maskSecrets, migrateTools, selMCP, selSkills, load]);
+
+      // 标题回填：已导入 Codex 会话补 session/title 事件（preview = dry-run）
+      const fixTitles = useCallback(async (preview) => {
+        if (!preview && !window.confirm(t("action.fixTitles.confirm"))) return null;
+        setBusy("fixTitles");
+        setError(null);
+        try {
+          const report = await api("/codex2dsh/backfill-titles", { apply: !preview });
+          setResult(report);
+          return report;
+        } catch (err) {
+          setError(fmt(t("status.loadError"), { msg: String((err && err.message) || err) }));
+          return null;
+        } finally {
+          setBusy(null);
+          load();
+        }
+      }, [t, load]);
 
       // 全量向导：逐步执行
       const wizardRun = useCallback(async (chosen) => {
@@ -453,6 +475,12 @@ window.__ModuleLoader__.load({
                     isBusy ? t("action.busy") : t("action.preview")),
                   h("button", { style: { ...S.btnPrimary, ...(isBusy ? S.disabled : {}) }, disabled: isBusy, onClick: () => run(c.id, { apply: true }) },
                     t("action.apply")),
+                  c.id === "sessions" &&
+                    h("button", {
+                      style: { ...S.btn, ...(busy === "fixTitles" ? S.disabled : {}) },
+                      disabled: busy === "fixTitles",
+                      onClick: () => fixTitles(false),
+                    }, busy === "fixTitles" ? t("action.busy") : t("action.fixTitles")),
                 ]),
               ]),
               c.id === "mcp" && h("div", { key: "mcp-list", style: { marginTop: 4 } }, [

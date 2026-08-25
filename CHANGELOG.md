@@ -2,6 +2,30 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/) 与 SemVer。
 
+## [0.1.1] - 未发布
+
+### 修复：导入 Codex 会话的标题丢失
+
+- **背景**：`import_codex` 的 codex 转换器不写 `session/title` 事件，DSH 标题
+  回退到首条 `user/message`——而 Codex rollout 首条几乎总是 harness 注入
+  （`<environment_context>` / `# AGENTS.md instructions` / `<agents-instructions>`），
+  导致导入会话全部显示成工作区/路径类标题。
+- **回填机制**（`lib/title.mjs` + `lib/sessionlog.mjs`）：
+  - 标题源按优先级：`~/.codex/session_index.jsonl` 的 `thread_name`（同 id 取
+    `updated_at` 最新）→ rollout 首条真实提问（跳过 `<` 开头块与 AGENTS.md/
+    CLAUDE.md 指令注入）；
+  - 写回 `session/title` 事件（`seq`=事件数、`surfaceOp:'append'`、data 形状
+    对齐 DSH `session-title` 服务的 `rename()`）；**只补不覆盖**（已有标题/
+    用户改名/非 Codex 导入/live 会话跳过），幂等可重复执行；
+  - 写后刷新 `sessionProjectionCache.coldSnapshot`，界面立即显示新标题。
+- **入口**：
+  - `codex2dsh_fix_titles` 工具（`apply:true` 才写盘，默认 dry-run）；
+  - 面板「会话导入」卡片新增「修复标题」按钮（`POST /codex2dsh/backfill-titles`）；
+  - `migrate_codex_sessions` 委托成功后自动补标题（best-effort，失败不影响导入）；
+  - CLI `codex2dsh titles`（只读预览：缺标题清单 + 将补标题 + 来源统计）。
+- 测试：新增 17 个用例（索引解析/注入过滤/事件构造/回填编排/真实 zstd 工件
+  读取），总计 100 个全绿。
+
 ## [0.1.0] - 未发布（骨架与文档基线）
 
 ### 新增（骨架）

@@ -141,6 +141,7 @@ codex2dsh mcp --apply        # 等同 migrate_codex_mcp(apply:true)
 codex2dsh skills --apply
 codex2dsh doctor
 codex2dsh ledger             # 打印台账
+codex2dsh titles             # 只读预览：已导入 Codex 会话的缺标题清单与将补标题
 ```
 
 - CLI 与工具共享 `lib/` 纯函数（同一套转换/脱敏/幂等逻辑）；
@@ -220,5 +221,6 @@ client 通过 fetch 调用后端路由（`lib/panel.mjs`，经 `ctx.inject(['web
 | `GET /codex2dsh/status` | 资产清单 + 台账计数 + 凭据文件（只读） |
 | `POST /codex2dsh/preview` | 全资产预览（零副作用） |
 | `POST /codex2dsh/migrate` | `{ action, apply?, ... }` 执行/预览单个迁移（与工具面同一套 lib 编排） |
+| `POST /codex2dsh/backfill-titles` | `{ apply?, codexHome?, sessionIds? }` 已导入 Codex 会话补 `session/title` 事件（默认 dry-run 预览；只补不覆盖） |
 
 webServer 路由形态：`ws.register({ kind: 'exact', path, handler: async (req, res) => {...} })`，`res.writeHead/end` 输出 JSON。

@@ -75,6 +75,13 @@ export interface MigrateSessionsOptions extends CommonOptions {
   restamp?: boolean
 }
 
+export interface FixTitlesOptions extends CommonOptions {
+  /** true 时写盘追加 session/title 事件；缺省 false = 只预览 */
+  apply?: boolean
+  /** 只处理这些 DSH 会话 id（缺省 = 全部 codex 导入会话） */
+  sessionIds?: string[]
+}
+
 export interface ReportItem {
   kind: 'mcp' | 'skill' | 'instruction' | 'memory' | 'config' | 'session' | 'secret' | 'other'
   name: string
@@ -100,6 +107,7 @@ export interface ToolSurface {
   migrate_codex_memory(options?: MigrateMemoryOptions): Promise<Report>
   migrate_codex_config(options?: MigrateConfigOptions): Promise<Report>
   migrate_codex_sessions(options?: MigrateSessionsOptions): Promise<Report>
+  codex2dsh_fix_titles(options?: FixTitlesOptions): Promise<Report>
   codex2dsh_doctor(options?: CommonOptions): Promise<Report>
   codex2dsh_ledger(): Promise<{ ok: boolean; entries: unknown[]; ledgerPath: string }>
 }

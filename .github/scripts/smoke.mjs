@@ -1,6 +1,6 @@
 // .github/scripts/smoke.mjs —— L3 集成冒烟（REQ-16）
 //
-// 用临时 CODEX_HOME / DSH_HOME / DSH_AGENTS_HOME 环境变量跑通全部 9 个工具
+// 用临时 CODEX_HOME / DSH_HOME / DSH_AGENTS_HOME 环境变量跑通全部 10 个工具
 // （fake ctx），断言产物落盘且零错误；绝不触碰真实用户目录。
 // 运行：node .github/scripts/smoke.mjs（CI 与本地均可）
 
@@ -111,6 +111,10 @@ check('sessions 委托成功', sess2.items.some((i) => i.status === 'delegated')
 // 8) doctor
 const doc = await tool('codex2dsh_doctor').execute({})
 check('doctor 体检', doc.ok === true && doc.items.some((i) => i.kind === 'secret'))
+
+// 8.5) fix_titles（fake ctx 无 sessionPersistence → 指引且不抛错）
+const fix = await tool('codex2dsh_fix_titles').execute({})
+check('fix_titles host 外指引', fix.ok === false && fix.warnings.some((w) => w.includes('sessionPersistence')))
 
 // 9) ledger
 const ledger = await tool('codex2dsh_ledger').execute({})

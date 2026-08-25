@@ -1,6 +1,6 @@
 {
   "name": "codex2dsh",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "把 Codex（OpenAI Codex CLI / Desktop）的 MCP、技能、全局配置、记忆以适配 DSH 的形式迁移进 DeepSeek Harness（DSH 插件）",
   "type": "module",
   "main": "./index.mjs",
