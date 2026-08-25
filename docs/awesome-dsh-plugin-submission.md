@@ -1,13 +1,7 @@
 # awesome-dsh-plugin 收录提交说明
 
-> 状态：**PR 已提交** ✅ — https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/3178（分支 `BigBlueBaby:add-codex2dsh`，2026-08-25），等待 CI 与维护者评审；合并后网站自动重建。
-> ⏳ **CI 待重跑**：`Submission gate` 唯一失败项 = 仓库年龄 0.9 天 < 1 天（仓库创建于 2026-08-24T09:25:56Z，满 1 天 = 2026-08-25T09:25:56Z ≈ 本地 17:26）。格式/构建检查（PR check）已通过。满 1 天后在 fork 分支 push 空提交触发重跑：
-> ```bash
-> cd D:\Projects\awesome-dsh-plugin
-> git checkout add-codex2dsh
-> git commit --allow-empty -m "ci: resubmit after repo age gate"
-> git push origin add-codex2dsh
-> ```
+> 状态：**PR 已提交且 CI 全绿** ✅ — https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/3178（分支 `BigBlueBaby:add-codex2dsh`，2026-08-25）。**PR check ✅ + Submission gate ✅ 全部通过，合并状态 MERGEABLE（无冲突）**，等待维护者评审合并；合并后网站自动重建。
+> 📌 过程备注：首次触发后曾与 main 产生 screenshots.json 冲突（他人 PR 同期更新），已 merge upstream/main 解决（`6529e20`）；期间踩到行尾坑——upstream 的 screenshots.json blob 是 CRLF，git autocrlf 会把 add 的内容转成 LF 导致 PR diff 全文件，最终用 `git hash-object -w --no-filters` + `git update-index --cacheinfo` 以 CRLF 原样入库解决，PR 相对 main 的 diff 保持 4 文件 +12 行。
 > 目标仓库：https://github.com/awesome-dsh-plugin/awesome-dsh-plugin
 
 ## 已完成的前置准备
