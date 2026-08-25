@@ -1,6 +1,13 @@
 # awesome-dsh-plugin 收录提交说明
 
 > 状态：**PR 已提交** ✅ — https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/3178（分支 `BigBlueBaby:add-codex2dsh`，2026-08-25），等待 CI 与维护者评审；合并后网站自动重建。
+> ⏳ **CI 待重跑**：`Submission gate` 唯一失败项 = 仓库年龄 0.9 天 < 1 天（仓库创建于 2026-08-24T09:25:56Z，满 1 天 = 2026-08-25T09:25:56Z ≈ 本地 17:26）。格式/构建检查（PR check）已通过。满 1 天后在 fork 分支 push 空提交触发重跑：
+> ```bash
+> cd D:\Projects\awesome-dsh-plugin
+> git checkout add-codex2dsh
+> git commit --allow-empty -m "ci: resubmit after repo age gate"
+> git push origin add-codex2dsh
+> ```
 > 目标仓库：https://github.com/awesome-dsh-plugin/awesome-dsh-plugin
 
 ## 已完成的前置准备
