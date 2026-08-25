@@ -8,7 +8,8 @@ import { zstdCompressSync } from 'node:zlib'
 import {
   normalizeTitle, readCodexTitleIndex, firstUserQuestionFromRolloutText,
   looksLikeInstructionsInjection, resolveImportedTitle, buildTitleEvent,
-  hasTitleEvent, planTitleBackfill, scanTitleBackfillStandalone,
+  isBadTitleEvent, hasTitleEvent, planTitleBackfill, scanTitleBackfillStandalone,
+  repairBadTitleFrames, REPAIR_HINT,
 } from '../lib/title.mjs'
 import { readSessionLog, scanZstdFrames } from '../lib/sessionlog.mjs'
 
@@ -144,14 +145,23 @@ test('resolveImportedTitle：索引优先，其次 rollout 首问，非 codex �
   }
 })
 
-test('buildTitleEvent：seq = 事件数，形状对齐 DSH session-title rename', () => {
+test('buildTitleEvent：seq = 事件数，形状对齐 DSH session-title rename，不带 surfaceOp', () => {
   const events = [codexImportedEvent('s1', null), USER_EVENT]
   const ev = buildTitleEvent(events, '新标题', 12345)
   assert.equal(ev.type, 'session/title')
   assert.equal(ev.seq, 2)
   assert.equal(ev.time, 12345)
-  assert.equal(ev.surfaceOp, 'append')
+  // session/title 不是 surface 事件，绝不能带 surfaceOp（宿主校验会判整份日志损坏）
+  assert.equal(ev.surfaceOp, undefined)
+  assert.equal(ev.sourceEventSeqs, undefined)
   assert.deepEqual(ev.data, { title: '新标题', messageSeqs: [], source: { kind: 'user' } })
+})
+
+test('isBadTitleEvent：session/title 携带 surfaceOp 判定', () => {
+  assert.equal(isBadTitleEvent({ type: 'session/title', data: {} }), false)
+  assert.equal(isBadTitleEvent({ type: 'session/title', surfaceOp: 'append', data: {} }), true)
+  assert.equal(isBadTitleEvent({ type: 'user/message', surfaceOp: 'append' }), false)
+  assert.equal(isBadTitleEvent(null), false)
 })
 
 test('hasTitleEvent：已有 session/title 判定', () => {
@@ -362,6 +372,146 @@ test('scanTitleBackfillStandalone：只读计划（缺标题 + 已标题 + 非 c
     const b = plan.planned.find((p) => p.sessionId === 'import-b')
     assert.equal(b.title, '从历史记录读取记忆，为什么编译这么慢？')
     assert.equal(b.source, 'rollout')
+  } finally {
+    fx.cleanup()
+  }
+})
+
+// ── 坏标题事件（surfaceOp 缺陷）检测与修复 ─────────────────────────────
+
+test('planTitleBackfill：坏标题事件跳过并给出修复指引，不覆盖', async () => {
+  const fx = makeRoot()
+  try {
+    const home = join(fx.root, 'codex-home')
+    mkdirSync(home, { recursive: true })
+    writeFileSync(join(home, 'session_index.jsonl'), '{"id":"s1","thread_name":"T1"}\n{"id":"s2","thread_name":"T2"}\n', 'utf8')
+    const bad = [codexImportedEvent('s1', null), USER_EVENT,
+      { type: 'session/title', seq: 2, time: 3, surfaceOp: 'append', data: { title: '坏标题', messageSeqs: [], source: { kind: 'user' } } }]
+    const good = [codexImportedEvent('s2', null), USER_EVENT]
+
+    const { ctx, appended } = fakeCtx({
+      headers: [{ id: 'x-bad', events: bad }, { id: 'x-good', events: good }],
+    })
+    const r = await planTitleBackfill(ctx, { codexHome: home })
+    assert.equal(r.summary.migrated, 1) // 只修了 good
+    assert.equal(r.skipped['bad-title-event'], 1)
+    assert.equal(appended.length, 1)
+    assert.equal(appended[0].id, 'x-good')
+    assert.ok(r.warnings.some((w) => w.includes('repair-titles')), '警告应包含修复指引')
+    assert.ok(REPAIR_HINT.includes('surfaceOp'))
+  } finally {
+    fx.cleanup()
+  }
+})
+
+/** 写 zstd 日志：header + 事件批（可选追加坏标题末帧） */
+function writeZstdLogWithBadTitle(dir, id, events, badTitleEvent) {
+  mkdirSync(dir, { recursive: true })
+  const header = JSON.stringify({ type: 'session', version: 0, id, createdAt: 1, delegationDepth: 0 }) + '\n'
+  const frames = [zstdCompressSync(Buffer.from(header))]
+  if (events.length > 0) frames.push(zstdCompressSync(Buffer.from(events.map((e) => JSON.stringify(e)).join('\n') + '\n')))
+  if (badTitleEvent) frames.push(zstdCompressSync(Buffer.from(JSON.stringify(badTitleEvent) + '\n')))
+  const path = join(dir, 'session.jsonl.zstd')
+  writeFileSync(path, Buffer.concat(frames))
+  return path
+}
+
+test('repairBadTitleFrames：dry-run 不截断；apply 截掉末帧坏标题、日志恢复原状', async () => {
+  const fx = makeRoot()
+  try {
+    const sessionsRoot = join(fx.root, 'sessions')
+    const events = [codexImportedEvent('s1', null), USER_EVENT]
+    const badTitle = { type: 'session/title', seq: 2, time: 3, surfaceOp: 'append', data: { title: '坏', messageSeqs: [], source: { kind: 'user' } } }
+    const path = writeZstdLogWithBadTitle(join(sessionsRoot, '--p--', 'import-a'), 'import-a', events, badTitle)
+
+    // dry-run：不截断
+    const dry = await repairBadTitleFrames(sessionsRoot, { dryRun: true })
+    assert.equal(dry.dryRun, true)
+    assert.equal(dry.repaired.length, 1)
+    assert.equal(dry.repaired[0].sessionId, 'import-a')
+    assert.ok(Number.isInteger(dry.repaired[0].truncateTo) && dry.repaired[0].truncateTo > 0)
+    // 文件未变
+    const { events: still } = readSessionLog(path)
+    assert.equal(still.length, 3)
+    assert.ok(still.some((e) => e.type === 'session/title' && e.surfaceOp !== undefined))
+
+    // apply：截断
+    const applied = await repairBadTitleFrames(sessionsRoot, { dryRun: false })
+    assert.equal(applied.dryRun, false)
+    assert.equal(applied.repaired.length, 1)
+    assert.equal(applied.skipped.length, 0)
+    // 修复后：坏标题消失、原事件完好、seq 连续
+    const { events: after } = readSessionLog(path)
+    assert.equal(after.length, 2)
+    assert.ok(!after.some((e) => e.type === 'session/title'))
+    assert.equal(after[0].type, 'session/imported')
+    assert.equal(after.every((e, i) => e.seq === i), true)
+    // 幂等：再跑无事可做
+    const again = await repairBadTitleFrames(sessionsRoot, { dryRun: false })
+    assert.equal(again.repaired.length, 0)
+  } finally {
+    fx.cleanup()
+  }
+})
+
+test('repairBadTitleFrames：好标题/无标题/非末帧坏标题一律跳过', async () => {
+  const fx = makeRoot()
+  try {
+    const sessionsRoot = join(fx.root, 'sessions')
+    // 好标题（无 surfaceOp）
+    writeZstdSessionLog(join(sessionsRoot, '--p--', 'import-good'), 'import-good', [
+      codexImportedEvent('s1', null), USER_EVENT, { type: 'session/title', seq: 2, data: { title: '好', messageSeqs: [], source: { kind: 'user' } } },
+    ])
+    // 无标题
+    writeZstdSessionLog(join(sessionsRoot, '--p--', 'import-none'), 'import-none', [codexImportedEvent('s2', null), USER_EVENT])
+    // 坏标题夹在中间（末帧不是坏标题）→ 跳过（需整档重建，少见，不自动处理）
+    const badMid = { type: 'session/title', seq: 2, time: 3, surfaceOp: 'append', data: { title: '坏' } }
+    const pathMid = writeZstdLogWithBadTitle(join(sessionsRoot, '--p--', 'import-mid'), 'import-mid', [
+      codexImportedEvent('s3', null), USER_EVENT, badMid,
+    ], null)
+    // 把「好标题」附加在坏标题之后（模拟坏标题非末帧）：先写坏标题帧，再追一个普通帧
+    const { appendFileSync } = await import('node:fs')
+    const extra = zstdCompressSync(Buffer.from(JSON.stringify({ type: 'turn/start', seq: 3, data: { turn: 2 } }) + '\n'))
+    appendFileSync(pathMid, extra)
+
+    const result = await repairBadTitleFrames(sessionsRoot, { dryRun: false })
+    assert.equal(result.repaired.length, 0)
+    assert.equal(result.skipped.length, 3)
+    const reasons = result.skipped.map((s) => s.reason)
+    assert.ok(reasons.includes('last-frame-not-bad-title'))
+    // 文件未被改动
+    const { events } = readSessionLog(pathMid)
+    assert.ok(events.some((e) => e.type === 'session/title' && e.surfaceOp !== undefined))
+  } finally {
+    fx.cleanup()
+  }
+})
+
+test('repairBadTitleFrames：明文日志（compression=none）末行坏标题同样修复', async () => {
+  const fx = makeRoot()
+  try {
+    const sessionsRoot = join(fx.root, 'sessions')
+    const dir = join(sessionsRoot, '--p--', 'import-plain')
+    mkdirSync(dir, { recursive: true })
+    const header = JSON.stringify({ type: 'session', version: 0, id: 'import-plain', createdAt: 1, delegationDepth: 0 })
+    const ev1 = JSON.stringify(codexImportedEvent('s1', null))
+    const ev2 = JSON.stringify(USER_EVENT)
+    const badTitle = JSON.stringify({ type: 'session/title', seq: 2, time: 3, surfaceOp: 'append', data: { title: '坏' } })
+    const path = join(dir, 'session.jsonl')
+    writeFileSync(path, [header, ev1, ev2, badTitle].join('\n') + '\n', 'utf8')
+
+    const dry = await repairBadTitleFrames(sessionsRoot, { dryRun: true })
+    assert.equal(dry.repaired.length, 1)
+    assert.equal(dry.repaired[0].sessionId, 'import-plain')
+
+    await repairBadTitleFrames(sessionsRoot, { dryRun: false })
+    const text = readFileSync(path, 'utf8')
+    assert.ok(!text.includes('session/title'))
+    assert.ok(!text.includes('surfaceOp'))
+    assert.equal(text.split('\n').filter(Boolean).length, 3) // header + 2 事件
+    const { events } = readSessionLog(path)
+    assert.equal(events.length, 2)
+    assert.equal(events.every((e, i) => e.seq === i), true)
   } finally {
     fx.cleanup()
   }

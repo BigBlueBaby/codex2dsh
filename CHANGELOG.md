@@ -14,8 +14,8 @@
   - 标题源按优先级：`~/.codex/session_index.jsonl` 的 `thread_name`（同 id 取
     `updated_at` 最新）→ rollout 首条真实提问（跳过 `<` 开头块与 AGENTS.md/
     CLAUDE.md 指令注入）；
-  - 写回 `session/title` 事件（`seq`=事件数、`surfaceOp:'append'`、data 形状
-    对齐 DSH `session-title` 服务的 `rename()`）；**只补不覆盖**（已有标题/
+  - 写回 `session/title` 事件（`seq`=事件数、data 形状对齐 DSH `session-title`
+    服务的 `rename()`，**不带 surfaceOp**）；**只补不覆盖**（已有标题/
     用户改名/非 Codex 导入/live 会话跳过），幂等可重复执行；
   - 写后刷新 `sessionProjectionCache.coldSnapshot`，界面立即显示新标题。
 - **入口**：
@@ -25,6 +25,24 @@
   - CLI `codex2dsh titles`（只读预览：缺标题清单 + 将补标题 + 来源统计）。
 - 测试：新增 17 个用例（索引解析/注入过滤/事件构造/回填编排/真实 zstd 工件
   读取），总计 100 个全绿。
+
+### 修复：session/title 误带 surfaceOp 导致会话无法打开
+
+- **缺陷**：0.1.1 早期回填给 `session/title` 事件附加了 `surfaceOp: 'append'`，
+  但 DSH 宿主只允许 `user/message` / `assistant/message` / `tool/result` 携带
+  surfaceOp（`@deepseek-ai/dsh-session` 的 surface 校验），非 surface 事件携带
+  surfaceOp 会让整份日志在打开时校验失败（`SessionPersistenceCorruptionError`：
+  `session event "session/title" is not surface-eligible and cannot carry
+  surfaceOp`），导致已回填的会话历史无法加载。
+- **修复**：
+  - `buildTitleEvent` 不再附加 surfaceOp（与 DSH `rename()` / dsh-chat-import
+    的 title 事件完全一致）；新增 `isBadTitleEvent` 检测；
+  - `codex2dsh repair-titles`（CLI）：清除日志末帧/末行的坏标题事件
+    （截断式修复，零数据丢失；默认 dry-run，`--apply` 才截断；修复后需重启
+    DSH 再回填标题）；
+  - `planTitleBackfill` 发现坏标题事件时跳过并给出修复指引（不覆盖）。
+- 测试：+5 个用例（坏标题检测/回填跳过/末帧截断/明文日志/非末帧跳过），
+  总计 105 个全绿。
 
 ## [0.1.0] - 未发布（骨架与文档基线）
 

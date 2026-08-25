@@ -142,6 +142,7 @@ codex2dsh skills --apply
 codex2dsh doctor
 codex2dsh ledger             # 打印台账
 codex2dsh titles             # 只读预览：已导入 Codex 会话的缺标题清单与将补标题
+codex2dsh repair-titles      # 修复坏标题事件（0.1.1 缺陷误带 surfaceOp 导致会话打不开；默认 dry-run，--apply 截断，修复后重启 DSH）
 ```
 
 - CLI 与工具共享 `lib/` 纯函数（同一套转换/脱敏/幂等逻辑）；

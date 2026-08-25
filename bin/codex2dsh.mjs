@@ -43,6 +43,9 @@ const HELP = `codex2dsh —— 把 Codex 配置迁移进 DSH（DSH 插件 CLI）
   codex2dsh sessions [--preview]         统计；委托需在 DSH 会话内调用工具
   codex2dsh titles [--dsh-home PATH]     只读预览：哪些已导入 Codex 会话缺标题、
                                          将补什么标题（写盘请在 DSH 面板/工具内执行）
+  codex2dsh repair-titles [--apply]      修复坏标题事件（0.1.1 早期缺陷误带
+                                         surfaceOp 导致会话打不开）；默认 dry-run；
+                                         修复后请重启 DSH 再回填标题
   codex2dsh doctor                       迁移体检
   codex2dsh ledger                       打印迁移台账
 
@@ -173,6 +176,21 @@ async function main() {
       console.log(JSON.stringify(plan, null, 2))
       if (plan.planned.length > 0) {
         ok(`提示：${plan.planned.length} 个会话将补标题；实际写盘请在 DSH 面板「会话导入 → 修复标题」或调用 codex2dsh_fix_titles 工具`)
+      }
+      return
+    }
+    case 'repair-titles': {
+      // 修复 0.1.1 早期缺陷：session/title 误带 surfaceOp 导致会话无法打开。
+      // 截掉日志末帧/末行的坏标题事件（默认 dry-run，--apply 才截断）。
+      // 必须在 DSH 宿主外执行；修复后重启 DSH 再回填标题。
+      const { repairBadTitleFrames } = await import('../lib/title.mjs')
+      const dshHome = flags['dsh-home'] ? String(flags['dsh-home']) : resolveDshHome()
+      const result = await repairBadTitleFrames(join(dshHome, 'sessions'), { dryRun: flags.apply !== true })
+      console.log(JSON.stringify(result, null, 2))
+      if (result.dryRun && result.repaired.length > 0) {
+        ok(`提示：${result.repaired.length} 个会话含坏标题事件（将截断修复）；确认后加 --apply 执行`)
+      } else if (!result.dryRun && result.repaired.length > 0) {
+        ok(`提示：已修复 ${result.repaired.length} 个会话；请重启 DSH 后重新执行「修复标题」回填正确标题`)
       }
       return
     }
