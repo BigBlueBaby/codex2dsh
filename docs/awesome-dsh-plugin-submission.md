@@ -5,7 +5,7 @@
 
 ## 已完成的前置准备
 
-- [x] 截图入库：`assets/screenshot-panel-top.png`、`assets/screenshot-panel-bottom.png`（已推送，raw URL 验证 200）
+- [x] 截图入库：`assets/screenshot-panel-top.png`、`assets/screenshot-panel-bottom.png`（已推送，raw URL 验证 200；底页截图已于 2026-08-25 刷新，含会话导入「修复标题」等新功能）
 - [x] 仓库添加 `dsh-plugin` topic
 - [x] npm 包 `codex2dsh@0.1.0` 已发布（repository 字段指向本仓库，自动关联下载量）
 - [x] `package.json` 声明 `dsh.bundle.patch` + 仓库根 `cordis.patch.yml`（可安装性校验通过）

@@ -58,16 +58,21 @@
   },
   "keywords": [
     "deepseek-harness",
-    "dsh-plugin",
+    "deepseek",
     "dsh",
+    "dsh-plugin",
     "codex",
     "codex-cli",
+    "codex-desktop",
     "migration",
+    "import",
+    "session",
     "mcp",
     "skills",
     "agents",
     "config",
-    "memory"
+    "memory",
+    "cli"
   ],
   "license": "MIT",
   "homepage": "https://github.com/BigBlueBaby/codex2dsh",

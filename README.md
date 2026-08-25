@@ -15,7 +15,17 @@
 
 </div>
 
-> **一句话**：Codex 的配置是资产，不是牢笼。`codex2dsh` 帮你把多年积累的 MCP 服务器、技能、全局规则、记忆「翻译」成 DSH 原生形态——**迁移全程可视化操作、源码只读、密钥按原样迁移、dry-run 预览、人工确认**。
+> **一句话**：Codex 的配置是资产，不是牢笼。`codex2dsh` 帮你把多年积累的 MCP 服务器、技能、全局规则、记忆、**会话历史**「翻译」成 DSH 原生形态——**迁移全程可视化操作、源码只读、密钥按原样迁移、dry-run 预览、人工确认**。
+
+> **搜索关键词**：Codex → DeepSeek Harness 迁移 · MCP 服务器镜像 · 技能（Skills）转换 · 全局指令（AGENTS.md）· 记忆迁移 · 会话历史导入 · DSH 插件 · 可视化迁移面板 · 无命令行迁移
+
+---
+
+## 📸 截图预览
+
+| 插件首页：状态总览 + 迁移选项 + 全量迁移向导 + 分类迁移卡片 | 插件底页：分类卡片（含会话导入「修复标题」）+ 最近结果 |
+| --- | --- |
+| ![插件首页](https://raw.githubusercontent.com/BigBlueBaby/codex2dsh/main/assets/screenshot-panel-top.png) | ![插件底页](https://raw.githubusercontent.com/BigBlueBaby/codex2dsh/main/assets/screenshot-panel-bottom.png) |
 
 ---
 
@@ -98,8 +108,10 @@ dsh plugin --profile desktop add -w link:D:/Projects/codex2dsh   # 替换为你�
 | **记忆迁移** | 面板记忆卡片 / `migrate_codex_memory` | Codex 记忆（含 sqlite 只读探测）→ DSH 记忆资产，不可读时降级报告 |
 | **配置建议** | 面板配置卡片 / `migrate_codex_config` | 模型 / Provider / 权限 / 项目信任 → 只读建议片段（绝不自动改 `settings.yaml`） |
 | **会话导入** | 面板会话卡片 / `migrate_codex_sessions` | 统计会话规模并委托 `import_codex`（dsh-chat-import）导入为可续聊会话 |
+| **会话标题回填** | 面板会话卡片「修复标题」/ `codex2dsh_fix_titles` | `import_codex` 不写 `session/title` 事件导致中文标题丢失（显示成工作区名）：从 `~/.codex/session_index.jsonl` 的 `thread_name` 或 rollout 首条真实提问回填标题（只补不覆盖、幂等、live 会话跳过）；委托导入后自动执行 |
+| **坏标题修复** | CLI `codex2dsh repair-titles` | 修复 0.1.1 早期缺陷误写的 `session/title` surfaceOp 坏事件（会话打不开 `SessionPersistenceCorruptionError`）；截断式修复零数据丢失，修复后重启 DSH 再回填 |
 | **迁移体检** | 面板体检卡片 / `codex2dsh_doctor` | 逐资产状态：已迁移 / 待迁移 / 不可迁移 / 密钥残留 |
-| **命令行** | `codex2dsh` | 无 GUI 环境的同能力 CLI：`preview / mcp / skills / instructions / memory / config / sessions / doctor / ledger` |
+| **命令行** | `codex2dsh` | 无 GUI 环境的同能力 CLI：`preview / mcp / skills / instructions / memory / config / sessions / titles / repair-titles / doctor / ledger` |
 
 ---
 
@@ -109,6 +121,8 @@ dsh plugin --profile desktop add -w link:D:/Projects/codex2dsh   # 替换为你�
 codex2dsh preview                      # 只读预览全部可迁移资产
 codex2dsh mcp --apply                  # 生成 MCP 镜像（密钥默认原样；--mask-secrets 脱敏）
 codex2dsh skills --apply --exclude ccpanes-*   # 技能迁移（排除 ccpanes）
+codex2dsh titles                       # 预览：哪些导入会话缺标题、将补什么标题
+codex2dsh repair-titles --apply        # 修复坏标题事件（0.1.1 缺陷导致会话打不开；修复后重启 DSH）
 codex2dsh doctor                       # 迁移体检
 codex2dsh ledger                       # 查看迁移台账
 ```
@@ -144,6 +158,12 @@ codex2dsh ledger                       # 查看迁移台账
 - 指令 → `~/.agents/instructions/`
 - 记忆 → `~/.dsh/memories/codex/`
 - MCP 镜像与台账 → `~/.dsh/codex2dsh/`
+
+### 导入的 Codex 会话标题丢了 / 显示成工作区名？
+`import_codex` 不写 `session/title` 事件，DSH 会回退到首条 user 消息——而 Codex rollout 首条常是 harness 注入（`<environment_context>` / AGENTS.md），所以显示成路径/工作区名。修复：面板「会话导入 → **修复标题**」按钮（或 `codex2dsh_fix_titles` 工具，`apply: true`），标题取自 `~/.codex/session_index.jsonl` 的 `thread_name`，缺失时取 rollout 首条真实提问；只补不覆盖、可重复执行。委托导入后也会自动补。
+
+### 会话打不开，报 `SessionPersistenceCorruptionError: ... is not surface-eligible ...`？
+这是 0.1.1 早期回填缺陷：`session/title` 误带 `surfaceOp` 导致整份日志校验失败。修复：在 DSH 外执行 `codex2dsh repair-titles --apply`（截断清除坏事件，零数据丢失），**重启 DSH** 后重新点「修复标题」即可。
 
 ### 卸载后数据会丢吗？
 不会。插件从不自动删除已迁移资产；卸载只移除插件本身。
