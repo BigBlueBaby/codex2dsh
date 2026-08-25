@@ -143,6 +143,7 @@ codex2dsh doctor
 codex2dsh ledger             # 打印台账
 codex2dsh titles             # 只读预览：已导入 Codex 会话的缺标题清单与将补标题
 codex2dsh repair-titles      # 修复坏标题事件（0.1.1 缺陷误带 surfaceOp 导致会话打不开；默认 dry-run，--apply 截断，修复后重启 DSH）
+codex2dsh regroup [--apply] [--dir PATH]  # 整理工作区：非工作区会话统一归组（默认 dry-run，执行后重启 DSH）
 ```
 
 - CLI 与工具共享 `lib/` 纯函数（同一套转换/脱敏/幂等逻辑）；
@@ -223,5 +224,6 @@ client 通过 fetch 调用后端路由（`lib/panel.mjs`，经 `ctx.inject(['web
 | `POST /codex2dsh/preview` | 全资产预览（零副作用） |
 | `POST /codex2dsh/migrate` | `{ action, apply?, ... }` 执行/预览单个迁移（与工具面同一套 lib 编排） |
 | `POST /codex2dsh/backfill-titles` | `{ apply?, codexHome?, sessionIds? }` 已导入 Codex 会话补 `session/title` 事件（默认 dry-run 预览；只补不覆盖） |
+| `POST /codex2dsh/regroup` | `{ apply?, codexHome?, regroupDir? }` 非工作区会话统一归组（默认 dry-run；执行后重启 DSH） |
 
 webServer 路由形态：`ws.register({ kind: 'exact', path, handler: async (req, res) => {...} })`，`res.writeHead/end` 输出 JSON。

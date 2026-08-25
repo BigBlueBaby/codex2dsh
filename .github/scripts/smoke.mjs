@@ -116,6 +116,10 @@ check('doctor 体检', doc.ok === true && doc.items.some((i) => i.kind === 'secr
 const fix = await tool('codex2dsh_fix_titles').execute({})
 check('fix_titles host 外指引', fix.ok === false && fix.warnings.some((w) => w.includes('sessionPersistence')))
 
+// 8.6) regroup_sessions（fake ctx 无 sessionPersistence → 指引且不抛错）
+const regroup = await tool('codex2dsh_regroup_sessions').execute({})
+check('regroup_sessions host 外指引', regroup.ok === false && regroup.warnings.some((w) => w.includes('sessionPersistence')))
+
 // 9) ledger
 const ledger = await tool('codex2dsh_ledger').execute({})
 check('台账存在', ledger.ok === true && Array.isArray(ledger.entries) && ledger.entries.length >= 4)

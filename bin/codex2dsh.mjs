@@ -46,6 +46,9 @@ const HELP = `codex2dsh —— 把 Codex 配置迁移进 DSH（DSH 插件 CLI）
   codex2dsh repair-titles [--apply]      修复坏标题事件（0.1.1 早期缺陷误带
                                          surfaceOp 导致会话打不开）；默认 dry-run；
                                          修复后请重启 DSH 再回填标题
+  codex2dsh regroup [--apply] [--dir PATH]  整理已导入会话工作区：Codex 非工作区
+                                         会话统一归到单个 DSH 工作区（默认 dry-run，
+                                         执行后重启 DSH）
   codex2dsh doctor                       迁移体检
   codex2dsh ledger                       打印迁移台账
 
@@ -191,6 +194,23 @@ async function main() {
         ok(`提示：${result.repaired.length} 个会话含坏标题事件（将截断修复）；确认后加 --apply 执行`)
       } else if (!result.dryRun && result.repaired.length > 0) {
         ok(`提示：已修复 ${result.repaired.length} 个会话；请重启 DSH 后重新执行「修复标题」回填正确标题`)
+      }
+      return
+    }
+    case 'regroup': {
+      // 整理工作区：Codex 非工作区会话统一归到单个 DSH 工作区
+      // （改写 header.cwd + 移动日志目录；默认 dry-run，--apply 执行）。
+      const { scanRegroupStandalone } = await import('../lib/regroup.mjs')
+      const dshHome = flags['dsh-home'] ? String(flags['dsh-home']) : resolveDshHome()
+      const result = await scanRegroupStandalone(codexHome, join(dshHome, 'sessions'), {
+        dryRun: flags.apply !== true,
+        regroupDir: flags.dir ? String(flags.dir) : undefined,
+      })
+      console.log(JSON.stringify(result, null, 2))
+      if (result.dryRun && result.planned.length > 0) {
+        ok(`提示：${result.planned.length} 个非工作区会话将归组到 ${result.regroupDir}；确认后加 --apply 执行，执行后请重启 DSH`)
+      } else if (!result.dryRun && result.applied.length > 0) {
+        ok(`提示：已归组 ${result.applied.length} 个会话到 ${result.regroupDir}；请重启 DSH 让工作区分组生效`)
       }
       return
     }

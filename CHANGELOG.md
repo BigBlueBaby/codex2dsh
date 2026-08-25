@@ -44,6 +44,26 @@
 - 测试：+5 个用例（坏标题检测/回填跳过/末帧截断/明文日志/非末帧跳过），
   总计 105 个全绿。
 
+### 新增：工作区归组修复（非工作区会话统一归组）
+
+- **问题**：DSH workspace = 会话 header.cwd 的 realpath（按目录分组）。Codex
+  非工作区会话（projectless）cwd 是 `Documents\Codex\<日期>\<主题>` 这类一次性
+  目录，迁移后**每个会话一个独立工作区**，且 `C:` 前缀字母序排前 → 「非工作区
+  会话反而在最上面、工作区会话在最下面」。
+- **修复**（`lib/regroup.mjs`）：
+  - 非工作区判定：`~/.codex/.codex-global-state.json` 的 `projectless-thread-ids`
+    （权威）∪ cwd 在 `thread-workspace-root-hints` 众数根下（兜底）；cwd 在任一
+    项目 `rootPaths` 下 = 工作区会话不动；未登记目录保守跳过；
+  - 归组：改写 header.cwd（日志第一帧 zstd 重写，其余帧原样）+ 物理移动会话
+    目录到新 projectKey 目录；幂等（已归组跳过）、live 会话跳过、默认 dry-run；
+  - 排序不动：DSH 启动 reconcile 按时间排，归组后与 Codex 顺序一致；
+  - 入口：`codex2dsh_regroup_sessions` 工具 / 面板「会话导入 → 整理工作区」
+    （`POST /codex2dsh/regroup`）/ CLI `codex2dsh regroup [--apply] [--dir]`；
+    委托导入后报告非工作区会话数（不自动移动，避免与宿主写游标冲突）；
+  - 执行后需重启 DSH 生效。
+- 测试：+10 个用例（projectKey/路径归一/状态解析/分类/header 重写/目录移动/
+  CLI 扫描/host 编排），总计 115 个全绿。
+
 ## [0.1.0] - 未发布（骨架与文档基线）
 
 ### 新增（骨架）

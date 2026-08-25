@@ -126,6 +126,8 @@ window.__ModuleLoader__.load({
         "cat.tools": "Local tools",
         "action.fixTitles": "Fix titles",
         "action.fixTitles.confirm": "Pin session/title events for imported Codex sessions (from Codex thread titles or first real prompt; sessions that already have a title are skipped)?",
+        "action.regroup": "Regroup",
+        "action.regroup.confirm": "Group Codex non-workspace sessions into one DSH workspace (rewrite header.cwd and move log dirs; other sessions untouched)? DSH restart required afterwards.",
         "select.all": "All",
         "select.none": "None",
         "select.keep": "{n} selected",
@@ -296,6 +298,24 @@ window.__ModuleLoader__.load({
         setError(null);
         try {
           const report = await api("/codex2dsh/backfill-titles", { apply: !preview });
+          setResult(report);
+          return report;
+        } catch (err) {
+          setError(fmt(t("status.loadError"), { msg: String((err && err.message) || err) }));
+          return null;
+        } finally {
+          setBusy(null);
+          load();
+        }
+      }, [t, load]);
+
+      // 工作区归组：非工作区会话统一归到一个 DSH 工作区（preview = dry-run）
+      const regroup = useCallback(async (preview) => {
+        if (!preview && !window.confirm(t("action.regroup.confirm"))) return null;
+        setBusy("regroup");
+        setError(null);
+        try {
+          const report = await api("/codex2dsh/regroup", { apply: !preview });
           setResult(report);
           return report;
         } catch (err) {
@@ -481,6 +501,12 @@ window.__ModuleLoader__.load({
                       disabled: busy === "fixTitles",
                       onClick: () => fixTitles(false),
                     }, busy === "fixTitles" ? t("action.busy") : t("action.fixTitles")),
+                  c.id === "sessions" &&
+                    h("button", {
+                      style: { ...S.btn, ...(busy === "regroup" ? S.disabled : {}) },
+                      disabled: busy === "regroup",
+                      onClick: () => regroup(false),
+                    }, busy === "regroup" ? t("action.busy") : t("action.regroup")),
                 ]),
               ]),
               c.id === "mcp" && h("div", { key: "mcp-list", style: { marginTop: 4 } }, [

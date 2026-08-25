@@ -110,8 +110,9 @@ dsh plugin --profile desktop add -w link:D:/Projects/codex2dsh   # 替换为你�
 | **会话导入** | 面板会话卡片 / `migrate_codex_sessions` | 统计会话规模并委托 `import_codex`（dsh-chat-import）导入为可续聊会话 |
 | **会话标题回填** | 面板会话卡片「修复标题」/ `codex2dsh_fix_titles` | `import_codex` 不写 `session/title` 事件导致中文标题丢失（显示成工作区名）：从 `~/.codex/session_index.jsonl` 的 `thread_name` 或 rollout 首条真实提问回填标题（只补不覆盖、幂等、live 会话跳过）；委托导入后自动执行 |
 | **坏标题修复** | CLI `codex2dsh repair-titles` | 修复 0.1.1 早期缺陷误写的 `session/title` surfaceOp 坏事件（会话打不开 `SessionPersistenceCorruptionError`）；截断式修复零数据丢失，修复后重启 DSH 再回填 |
+| **工作区归组** | 面板会话卡片「整理工作区」/ `codex2dsh_regroup_sessions` / CLI `codex2dsh regroup` | Codex 非工作区会话（projectless）迁移后每个会话一个独立工作区、列表乱序：统一改写 header.cwd 并移动日志目录，归入单个 DSH 工作区（`projectless-thread-ids` 权威判定；其余会话不动；执行后重启 DSH） |
 | **迁移体检** | 面板体检卡片 / `codex2dsh_doctor` | 逐资产状态：已迁移 / 待迁移 / 不可迁移 / 密钥残留 |
-| **命令行** | `codex2dsh` | 无 GUI 环境的同能力 CLI：`preview / mcp / skills / instructions / memory / config / sessions / titles / repair-titles / doctor / ledger` |
+| **命令行** | `codex2dsh` | 无 GUI 环境的同能力 CLI：`preview / mcp / skills / instructions / memory / config / sessions / titles / repair-titles / regroup / doctor / ledger` |
 
 ---
 
@@ -123,6 +124,7 @@ codex2dsh mcp --apply                  # 生成 MCP 镜像（密钥默认原样�
 codex2dsh skills --apply --exclude ccpanes-*   # 技能迁移（排除 ccpanes）
 codex2dsh titles                       # 预览：哪些导入会话缺标题、将补什么标题
 codex2dsh repair-titles --apply        # 修复坏标题事件（0.1.1 缺陷导致会话打不开；修复后重启 DSH）
+codex2dsh regroup --apply              # 整理工作区：非工作区会话统一归组（执行后重启 DSH）
 codex2dsh doctor                       # 迁移体检
 codex2dsh ledger                       # 查看迁移台账
 ```
@@ -164,6 +166,9 @@ codex2dsh ledger                       # 查看迁移台账
 
 ### 会话打不开，报 `SessionPersistenceCorruptionError: ... is not surface-eligible ...`？
 这是 0.1.1 早期回填缺陷：`session/title` 误带 `surfaceOp` 导致整份日志校验失败。修复：在 DSH 外执行 `codex2dsh repair-titles --apply`（截断清除坏事件，零数据丢失），**重启 DSH** 后重新点「修复标题」即可。
+
+### 会话列表很乱：非工作区会话每个一个工作区、还排在最上面？
+DSH 的 workspace 按会话工作目录（cwd）分组，而 Codex 非工作区会话的 cwd 是 `Documents\Codex\<日期>\<主题>` 这类一次性目录，迁移后各自成组，又因 `C:` 前缀字母序排前。修复：面板「会话导入 → **整理工作区**」（或 `codex2dsh regroup --apply`）——按 Codex 官方标记（`projectless-thread-ids`）把非工作区会话统一改写 header.cwd 并移动到同一工作区目录，**重启 DSH** 后生效；其余工作区会话不动，排序恢复为按时间、与 Codex 一致。
 
 ### 卸载后数据会丢吗？
 不会。插件从不自动删除已迁移资产；卸载只移除插件本身。

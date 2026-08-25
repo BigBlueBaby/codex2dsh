@@ -82,6 +82,13 @@ export interface FixTitlesOptions extends CommonOptions {
   sessionIds?: string[]
 }
 
+export interface RegroupSessionsOptions extends CommonOptions {
+  /** true 时执行归组（改写 header.cwd + 移动日志目录）；缺省 false = 只预览 */
+  apply?: boolean
+  /** 非工作区会话统一目录（默认取 Codex thread-workspace-root-hints 众数根） */
+  regroupDir?: string
+}
+
 export interface ReportItem {
   kind: 'mcp' | 'skill' | 'instruction' | 'memory' | 'config' | 'session' | 'secret' | 'other'
   name: string
@@ -108,6 +115,7 @@ export interface ToolSurface {
   migrate_codex_config(options?: MigrateConfigOptions): Promise<Report>
   migrate_codex_sessions(options?: MigrateSessionsOptions): Promise<Report>
   codex2dsh_fix_titles(options?: FixTitlesOptions): Promise<Report>
+  codex2dsh_regroup_sessions(options?: RegroupSessionsOptions): Promise<Report>
   codex2dsh_doctor(options?: CommonOptions): Promise<Report>
   codex2dsh_ledger(): Promise<{ ok: boolean; entries: unknown[]; ledgerPath: string }>
 }
