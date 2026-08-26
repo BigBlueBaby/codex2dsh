@@ -107,6 +107,7 @@ dsh plugin --profile desktop add -w link:D:/Projects/codex2dsh   # 替换为你�
 | **全局指令** | 面板指令卡片 / `migrate_codex_instructions` | `AGENTS.md` / `instructions.md` → **`$DSH_HOME/AGENTS.md`**（DSH 用户全局指令唯一位置）；**自动适配 Codex 专属引用**：本地工具路径改写为迁移后目录（`~/.codex/tools/...` → `$DSH_HOME/codex2dsh/tools/...`）、MCP 工具前缀归一（`mcp__google_mcp_toolbox__` → `mcp__google-mcp-toolbox__`）、未配置的 MCP 服务器引用逐条警告 |
 | **迁移验证** | 面板体检卡片「验证迁移」/ `codex2dsh_verify` / CLI `verify` | 只读验证「在 DSH 中真实可用」：MCP 镜像是否已合并进 profile（未合并 = DSH 中未加载）、stdio 服务器命令/配置路径是否存在、AGENTS.md 引用是否在 DSH 配置中成立 |
 | **记忆迁移** | 面板记忆卡片 / `migrate_codex_memory` | Codex 记忆（含 sqlite 只读探测）→ DSH 记忆资产，不可读时降级报告 |
+| **记忆导入 dsh-mnemon** | `codex2dsh_import_memory` / CLI `memory-import` | 把迁移的 Codex 记忆导入 **dsh-mnemon**（全局记忆引擎，`~/.mnemon`）：Runtime 层提炼 memory_summary.md 为每轮注入的 USER/MEMORY 条目（容量裁剪、合并去重）；Documents 层导入三份完整记忆原文（可搜索）——恢复"像 Codex 一样自动读取/查询/写入" |
 | **配置建议** | 面板配置卡片 / `migrate_codex_config` | 模型 / Provider / 权限 / 项目信任 → 只读建议片段（绝不自动改 `settings.yaml`） |
 | **会话导入** | 面板会话卡片 / `migrate_codex_sessions` | 统计会话规模并委托 `import_codex`（dsh-chat-import）导入为可续聊会话 |
 | **会话标题回填** | 面板会话卡片「修复标题」/ `codex2dsh_fix_titles` | `import_codex` 不写 `session/title` 事件导致中文标题丢失（显示成工作区名）：从 `~/.codex/session_index.jsonl` 的 `thread_name` 或 rollout 首条真实提问回填标题（只补不覆盖、幂等、live 会话跳过）；委托导入后自动执行 |
