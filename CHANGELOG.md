@@ -4,6 +4,33 @@
 
 ## [0.1.1] - 未发布
 
+### 修复：AGENTS.md 迁移未适配 Codex 专属引用（迁移可用性）
+
+- **缺陷**：旧版把 AGENTS.md 原文照搬，其中 Codex 专属引用在 DSH 中失效：
+  本地工具绝对路径（`~/.codex/tools/mcp-toolbox/...`，工具随迁后路径已变）、
+  MCP 工具前缀下划线形态（`mcp__google_mcp_toolbox__` 实际服务器名
+  `google-mcp-toolbox`）、未配置的 MCP 服务器引用（如 `figma_developer`）。
+- **修复**（`lib/instructions.mjs` 新增 `adaptCodexReferences` 适配层）：
+  - 工具路径改写：`<codexHome>/tools/<name>/...`（含 `~/.codex/tools/...` 形态，
+    反斜杠/正斜杠兼容）→ `$DSH_HOME/codex2dsh/tools/<name>/...`；
+  - MCP 前缀归一：`mcp__<server_下划线>__` → `mcp__<server-连字符>__`（对照
+    mirror 实际服务器名自动改写）；
+  - MCP 引用校验：规则中 `mcp__<server>__` 与 `<server> MCP` 字样逐一对照
+    DSH 侧已配置服务器，未配置的逐条警告（迁移报告可见）；
+  - 幂等/冲突语义不变；预览也展示改写数与警告。
+
+### 新增：迁移可调用性验证（`codex2dsh_verify` / CLI `verify` / 面板「验证迁移」）
+
+- 迁移成功的标准 = **DSH 中真实可用**，而非文件已生成。`lib/verify.mjs`
+  只读验证：
+  1. mirror 片段是否已合并进 profile 的 `cordis.patch.yml`（未合并 =
+     DSH 中 MCP 未加载，迁移未完成）；
+  2. mirror 中每个 stdio 服务器的 command / `--config` 路径是否存在
+     （工具是否随迁、路径是否有效）；
+  3. `$DSH_HOME/AGENTS.md` 中的 MCP/工具引用是否在 DSH 配置中成立
+     （复用适配层校验，残留未改写路径逐条报告）。
+- 面板「迁移体检」卡片新增「验证迁移」按钮；CLI `codex2dsh verify`。
+
 ### 修复：全局指令迁移位置错误导致 DSH 未注入
 
 - **缺陷**：旧版 `migrate_codex_instructions` 把全局指令写到

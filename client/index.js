@@ -58,6 +58,8 @@ window.__ModuleLoader__.load({
         "cat.tools": "本地工具",
         "action.fixTitles": "修复标题",
         "action.fixTitles.confirm": "为已导入的 Codex 会话补钉标题（来自 Codex 线程标题或首条真实提问；已有标题/已改名的会话跳过）？",
+        "action.verify": "验证迁移",
+        "action.verify.confirm": "执行迁移可调用性验证（只读）：检查 MCP 是否已合并进 profile、工具是否可执行、AGENTS.md 引用是否在 DSH 中成立？",
         "select.all": "全选",
         "select.none": "清空",
         "select.keep": "已选 {n} 项",
@@ -126,6 +128,8 @@ window.__ModuleLoader__.load({
         "cat.tools": "Local tools",
         "action.fixTitles": "Fix titles",
         "action.fixTitles.confirm": "Pin session/title events for imported Codex sessions (from Codex thread titles or first real prompt; sessions that already have a title are skipped)?",
+        "action.verify": "Verify migration",
+        "action.verify.confirm": "Run migration usability check (read-only): is MCP merged into the profile, are tools executable, do AGENTS.md references hold in DSH?",
         "action.regroup": "Regroup",
         "action.regroup.confirm": "Group Codex non-workspace sessions into one DSH workspace (rewrite header.cwd and move log dirs; other sessions untouched)? DSH restart required afterwards.",
         "select.all": "All",
@@ -298,6 +302,24 @@ window.__ModuleLoader__.load({
         setError(null);
         try {
           const report = await api("/codex2dsh/backfill-titles", { apply: !preview });
+          setResult(report);
+          return report;
+        } catch (err) {
+          setError(fmt(t("status.loadError"), { msg: String((err && err.message) || err) }));
+          return null;
+        } finally {
+          setBusy(null);
+          load();
+        }
+      }, [t, load]);
+
+      // 迁移可调用性验证（只读）：MCP 合并状态 / 工具可执行 / AGENTS.md 引用
+      const verify = useCallback(async () => {
+        if (!window.confirm(t("action.verify.confirm"))) return null;
+        setBusy("verify");
+        setError(null);
+        try {
+          const report = await api("/codex2dsh/migrate", { action: "verify" });
           setResult(report);
           return report;
         } catch (err) {
@@ -507,6 +529,12 @@ window.__ModuleLoader__.load({
                       disabled: busy === "regroup",
                       onClick: () => regroup(false),
                     }, busy === "regroup" ? t("action.busy") : t("action.regroup")),
+                  c.id === "doctor" &&
+                    h("button", {
+                      style: { ...S.btn, ...(busy === "verify" ? S.disabled : {}) },
+                      disabled: busy === "verify",
+                      onClick: () => verify(),
+                    }, busy === "verify" ? t("action.busy") : t("action.verify")),
                 ]),
               ]),
               c.id === "mcp" && h("div", { key: "mcp-list", style: { marginTop: 4 } }, [

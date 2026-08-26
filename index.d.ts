@@ -117,6 +117,7 @@ export interface ToolSurface {
   migrate_codex_sessions(options?: MigrateSessionsOptions): Promise<Report>
   codex2dsh_fix_titles(options?: FixTitlesOptions): Promise<Report>
   codex2dsh_regroup_sessions(options?: RegroupSessionsOptions): Promise<Report>
+  codex2dsh_verify(options?: CommonOptions & { dshHome?: string }): Promise<Report>
   codex2dsh_doctor(options?: CommonOptions): Promise<Report>
   codex2dsh_ledger(): Promise<{ ok: boolean; entries: unknown[]; ledgerPath: string }>
 }

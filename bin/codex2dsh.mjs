@@ -50,6 +50,9 @@ const HELP = `codex2dsh —— 把 Codex 配置迁移进 DSH（DSH 插件 CLI）
                                          会话统一归到单个 DSH 工作区（默认 dry-run，
                                          执行后重启 DSH）
   codex2dsh doctor                       迁移体检
+  codex2dsh verify                       迁移可调用性验证（只读）：MCP 是否已合并
+                                         进 profile、工具是否可执行、AGENTS.md 引用
+                                         是否在 DSH 配置中成立
   codex2dsh ledger                       打印迁移台账
 
 选择性迁移（mcp / skills）:
@@ -217,6 +220,15 @@ async function main() {
     }
     case 'doctor': {
       const report = await runDoctor(codexHome, { ledgerDir })
+      console.log(JSON.stringify(report, null, 2))
+      return
+    }
+    case 'verify': {
+      // 迁移可调用性验证（只读）：MCP 是否已合并进 profile、工具是否可执行、
+      // AGENTS.md 引用是否在 DSH 配置中成立
+      const { verifyMigration } = await import('../lib/verify.mjs')
+      const dshHome = flags['dsh-home'] ? String(flags['dsh-home']) : resolveDshHome()
+      const report = await verifyMigration(codexHome, dshHome, { ledgerDir })
       console.log(JSON.stringify(report, null, 2))
       return
     }
