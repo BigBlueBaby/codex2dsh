@@ -2,7 +2,7 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/) 与 SemVer。
 
-## [0.1.3] - 未发布
+## [0.1.3] - 2026-08-26
 
 ### 新增：Codex 记忆导入 dsh-mnemon（全局记忆引擎，记忆迁移真正可用）
 
