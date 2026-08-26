@@ -2,6 +2,24 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/) 与 SemVer。
 
+## [0.1.3] - 未发布
+
+### 新增：Codex 记忆导入 dsh-mnemon（全局记忆引擎，记忆迁移真正可用）
+
+- **背景**：DSH 原生无记忆服务，迁移的记忆文件只是死资产；接入 dsh-mnemon
+  （storageScope=global → `~/.mnemon`）后恢复"像 Codex 一样自动读取/查询/写入"。
+- **实现**（`lib/memory.mjs`）：
+  - `parseMemorySummaryForMnemon`：解析 Codex `memory_summary.md`（User Profile /
+    User preferences → user；General Tips / What's in Memory 的 learnings → memory）；
+  - Runtime 层：提炼条目按投影容量裁剪（user ≤ 4096 B / memory ≤ 10240 B UTF-8，
+    § 为 2 字节）→ 写 `runtime/memories.json`（合并去重，USER.md/MEMORY.md 为插件
+    自动投影，每轮注入）；
+  - Documents 层：MEMORY.md / memory_summary.md / raw_memories.md 三份完整原文 →
+    `documents/active/` + `index.json` 注册（frontmatter 格式复刻
+    renderDocument，幂等按 title、force 覆盖 revision+1）；
+- **入口**：`codex2dsh_import_memory` 工具 / CLI `codex2dsh memory-import`。
+- 测试：+5（解析/容量/渲染/端到端导入/幂等/无源指引），全量 130 绿。
+
 ## [0.1.2] - 未发布
 
 ### 修复：MCP 镜像与 dsh-mcp-client 契约不符导致 DSH 启动失败（三连）

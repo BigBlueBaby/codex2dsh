@@ -39,6 +39,8 @@ const HELP = `codex2dsh —— 把 Codex 配置迁移进 DSH（DSH 插件 CLI）
   codex2dsh skills [--apply] [--agents-home DIR] [--fix-frontmatter] [--force]
   codex2dsh instructions [--apply] [--dsh-home DIR] [--force]
   codex2dsh memory [--apply] [--out DIR] [--force]
+  codex2dsh memory-import [--mnemon-root DIR] [--force]
+                                         导入迁移的 Codex 记忆到 dsh-mnemon（全局记忆引擎，默认 ~/.mnemon）
   codex2dsh config [--apply] [--out PATH] [--force]
   codex2dsh sessions [--preview]         统计；委托需在 DSH 会话内调用工具
   codex2dsh titles [--dsh-home PATH]     只读预览：哪些已导入 Codex 会话缺标题、
@@ -151,6 +153,14 @@ async function main() {
       const report = apply
         ? await migrateMemory(codexHome, outDir, { force: flags.force === true, ledgerDir })
         : await planMemoryMigration(codexHome)
+      console.log(JSON.stringify(report, null, 2))
+      return
+    }
+    case 'memory-import': {
+      // 把迁移的 Codex 记忆导入 dsh-mnemon（全局记忆引擎，默认 ~/.mnemon）
+      const { importMemoryToMnemon } = await import('../lib/memory.mjs')
+      const mnemonRoot = flags['mnemon-root'] ? String(flags['mnemon-root']) : undefined
+      const report = await importMemoryToMnemon({ codexHome, mnemonRoot, force: flags.force === true, ledgerDir })
       console.log(JSON.stringify(report, null, 2))
       return
     }
