@@ -64,10 +64,13 @@ test('renderMcpPlan 输出可审阅 YAML（maskSecrets 时含掩码）', () => {
   const { plan } = buildMcpPlan(config, { excludeRuntime: true, maskSecrets: true })
   const yaml = renderMcpPlan({ plan, source: 'C:\\fixture\\config.toml' })
   assert.ok(yaml.includes('- insert:'))
-  assert.ok(yaml.includes('id: dsh-mcp-client'))
-  // name 必须是 loader 可解析的完整包名（短 id 会导致 DSH 启动失败：cannot resolve package）
+  // 每台服务器一个 entry：id 唯一（mcp-<serverName>）、name 完整包名（短 id 会导致
+  // DSH 启动失败：cannot resolve package）、config 含 serverName + transport
+  assert.ok(yaml.includes('- id: mcp-google-mcp-toolbox'))
+  assert.ok(yaml.includes("- id: mcp-kingbase-demo-db"))
   assert.ok(yaml.includes("name: '@deepseek-ai/dsh-mcp-client'"))
-  assert.ok(yaml.includes('kingbase-demo-db:'))
+  assert.ok(yaml.includes('serverName: google-mcp-toolbox'))
+  assert.ok(yaml.includes('transport: stdio'))
   assert.ok(yaml.includes('--password') && yaml.includes('****'))
   assert.ok(!yaml.includes('node_repl'), '渲染不应包含被排除的运行时服务器')
   assert.ok(!yaml.includes('Example#2023'), '脱敏模式下示例密码不得出现在输出')

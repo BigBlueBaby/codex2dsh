@@ -15,27 +15,29 @@ function makeRoot(prefix = 'codex2dsh-verify-') {
   return { root, cleanup: () => rmSync(root, { recursive: true, force: true }) }
 }
 
-// 与 renderMcpPlan 输出同构的 mirror 片段（缩进：servers=6、服务器名=8、属性=10、args 项=12）
+// 与 renderMcpPlan 输出同构的 mirror 片段（每台服务器一个 dsh-mcp-client entry）
 function makeMirror(dshHome) {
   const t = join(dshHome, 'codex2dsh', 'tools', 'mcp-toolbox')
   const exe = join(t, 'toolbox.exe')
   const yaml = join(t, 'tools.yaml')
   return [
     '- insert:',
-    '    id: dsh-mcp-client',
-    "    name: '@deepseek-ai/dsh-mcp-client'",
-    '    config:',
-    '      servers:',
-    '        google-mcp-toolbox:',
-    '          type: stdio',
-    `          command: '${exe}'`,
-    '          args:',
-    '            - --config',
-    `            - '${yaml}'`,
-    '            - --stdio',
-    '        figma:',
-    '          type: http',
-    '          url: http://127.0.0.1:9000/mcp',
+    '    - id: mcp-google-mcp-toolbox',
+    "      name: '@deepseek-ai/dsh-mcp-client'",
+    '      config:',
+    '        serverName: google-mcp-toolbox',
+    '        transport: stdio',
+    `        command: '${exe}'`,
+    '        args:',
+    '          - --config',
+    `          - '${yaml}'`,
+    '          - --stdio',
+    '    - id: mcp-figma',
+    "      name: '@deepseek-ai/dsh-mcp-client'",
+    '      config:',
+    '        serverName: figma',
+    '        transport: streamable-http',
+    '        url: http://127.0.0.1:9000/mcp',
   ].join('\n')
 }
 
@@ -68,7 +70,7 @@ test('readMirrorServersDetail：command 与 --config 路径提取', () => {
     assert.equal(g.command, join(dsh, 'codex2dsh', 'tools', 'mcp-toolbox', 'toolbox.exe'))
     assert.equal(g.configPath, join(dsh, 'codex2dsh', 'tools', 'mcp-toolbox', 'tools.yaml'))
     const f = details.find((s) => s.name === 'figma')
-    assert.equal(f.type, 'http')
+    assert.equal(f.transport, 'streamable-http')
   } finally {
     fx.cleanup()
   }

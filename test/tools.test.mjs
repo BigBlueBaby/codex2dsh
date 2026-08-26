@@ -96,7 +96,7 @@ if (registerTools) {
       const applied = await tool.execute({ codexHome: fx.home, outPath: fx.out, apply: true })
       assert.equal(applied.ok, true)
       const content = readFileSync(fx.out, 'utf8')
-      assert.ok(content.includes('demo-db:'))
+      assert.ok(content.includes('serverName: demo-db'))
       assert.ok(content.includes('Example#2023'), '默认模式应直接迁移密钥')
       assert.ok(applied.warnings.some((w) => w.includes('原样迁移')))
 

@@ -119,7 +119,7 @@ test('POST /codex2dsh/migrate：mcp apply 落盘 + 幂等 + 未知动作', async
     const selPath = join(env.ledger, 'mcp-sel.yml')
     const sel = await call(ws, '/codex2dsh/migrate', fakeReq({ action: 'mcp', codexHome: env.home, apply: true, outPath: selPath, include: ['demo-db'] }))
     const selContent = readFileSync(selPath, 'utf8')
-    assert.ok(selContent.includes('demo-db:'))
+    assert.ok(selContent.includes('serverName: demo-db'))
     assert.ok(!selContent.includes('node_repl'))
     // 台账
     const ledger = JSON.parse(readFileSync(join(env.ledger, 'ledger.json'), 'utf8'))
