@@ -1,6 +1,7 @@
 # awesome-dsh-plugin 收录提交说明
 
 > 状态：**PR 已提交且 CI 全绿** ✅ — https://github.com/awesome-dsh-plugin/awesome-dsh-plugin/pull/3178（分支 `BigBlueBaby:add-codex2dsh`，2026-08-25）。**PR check ✅ + Submission gate ✅ 全部通过，合并状态 MERGEABLE（无冲突）**，等待维护者评审合并；合并后网站自动重建。
+> 📌 **截图声明已改为仓库级（2026-08-26，维护者要求）**：维护者指出共享 `data/screenshots.json` 与 108 个并发 PR 抢文件。已按新做法——插件仓库根放 `screenshots.json`（相对路径数组，`assets/` 下两张图），PR 中放弃 `data/screenshots.json` 改动（rebase upstream 后 checkout upstream 版本，PR 现仅 3 文件 +8 行：条目 + README×2）。CI 重跑全绿，已在 PR 评论确认（#issuecomment-5422197909）。后续换截图只需推插件仓库，无需再提 PR。
 > 📌 过程备注：首次触发后曾与 main 产生 screenshots.json 冲突（他人 PR 同期更新），已 merge upstream/main 解决（`6529e20`）；期间踩到行尾坑——upstream 的 screenshots.json blob 是 CRLF，git autocrlf 会把 add 的内容转成 LF 导致 PR diff 全文件，最终用 `git hash-object -w --no-filters` + `git update-index --cacheinfo` 以 CRLF 原样入库解决，PR 相对 main 的 diff 保持 4 文件 +12 行。
 > 目标仓库：https://github.com/awesome-dsh-plugin/awesome-dsh-plugin
 
