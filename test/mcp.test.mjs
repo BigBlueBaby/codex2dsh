@@ -65,6 +65,8 @@ test('renderMcpPlan 输出可审阅 YAML（maskSecrets 时含掩码）', () => {
   const yaml = renderMcpPlan({ plan, source: 'C:\\fixture\\config.toml' })
   assert.ok(yaml.includes('- insert:'))
   assert.ok(yaml.includes('id: dsh-mcp-client'))
+  // name 必须是 loader 可解析的完整包名（短 id 会导致 DSH 启动失败：cannot resolve package）
+  assert.ok(yaml.includes("name: '@deepseek-ai/dsh-mcp-client'"))
   assert.ok(yaml.includes('kingbase-demo-db:'))
   assert.ok(yaml.includes('--password') && yaml.includes('****'))
   assert.ok(!yaml.includes('node_repl'), '渲染不应包含被排除的运行时服务器')
