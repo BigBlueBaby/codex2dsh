@@ -130,13 +130,14 @@ test('importMemoryToMnemon：Runtime 提炼 + Documents 导入 + 幂等', async 
     assert.equal(index.documents.length, 3)
     for (const d of index.documents) {
       assert.equal(d.status, 'active')
-      assert.ok(existsSync(join(mnemonRoot, 'documents', d.relativePath)), 'active 文件存在: ' + d.relativePath)
+      assert.ok(d.relativePath.startsWith('documents/active/'), 'relativePath 必须带 documents/ 前缀: ' + d.relativePath)
+      assert.ok(existsSync(join(mnemonRoot, d.relativePath)), 'active 文件存在: ' + d.relativePath)
       assert.ok(d.contentHash.length === 64, 'sha256 hash')
       assert.ok(d.sizeBytes > 0)
     }
     const memDoc = index.documents.find((d) => d.title === 'codex2dsh-memory-MEMORY')
     assert.ok(memDoc)
-    const body = readFileSync(join(mnemonRoot, 'documents', memDoc.relativePath), 'utf8')
+    const body = readFileSync(join(mnemonRoot, memDoc.relativePath), 'utf8')
     assert.ok(body.includes('# 长期记忆'), '正文保留')
 
     // 幂等：再跑 → memories 无新增、documents skipped
