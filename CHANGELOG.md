@@ -2,6 +2,28 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/) 与 SemVer。
 
+## [0.1.2] - 未发布
+
+### 修复：MCP 镜像与 dsh-mcp-client 契约不符导致 DSH 启动失败（三连）
+
+0.1.1 生成的 `mcp-mirror.cordis.yml` 合并进 profile 后 DSH 启动失败并自动回滚，
+共三处与 `@deepseek-ai/dsh-mcp-client`（0.1.x）契约不符：
+
+1. **name 用短 id**：`name: dsh-mcp-client` → loader 按 name 解析安装包失败
+   （`cannot resolve package "dsh-mcp-client"`）——改为完整包名
+   `'@deepseek-ai/dsh-mcp-client'`（@ 开头加引号）；
+2. **结构整体不符**：旧版 `servers: {name: {type, command}}` 映射，而契约是
+   **每台服务器一个插件实例** `{serverName(必填), transport: stdio|streamable-http,
+   command, args, env}`——渲染器重写为每服务器一个 insert entry
+   （id=`mcp-<serverName>` 唯一）；移除 schema 不存在的 `startupTimeoutSec`；
+3. **TOML 数值 args 未字符串化**：`--port 54322` 为数字 → schema 要求
+   `args: string[]` → `ValidationError: invalid config`——config 解析与
+   buildMcpPlan 双层字符串化兜底。
+
+同步：mirror 解析器（`readMirrorServerNames`/`readMirrorServersDetail`）重写、
+verify 增加契约级检查与 `commandResolvable`（npx 等 PATH 命令不误报）、
+全部测试 fixture/断言更新（含 TOML 数字 args 防回归），全量绿。
+
 ## [0.1.1] - 未发布
 
 ### 修复：AGENTS.md 迁移未适配 Codex 专属引用（迁移可用性）
