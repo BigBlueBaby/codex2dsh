@@ -5,7 +5,7 @@
 //   codex2dsh preview                     # 只读预览全部可迁移资产
 //   codex2dsh mcp [--apply] [--out PATH]  # MCP 镜像（默认 dry-run）
 //   codex2dsh skills [--apply] [--agents-home DIR] [--fix-frontmatter] [--force]
-//   codex2dsh instructions [--apply] [--agents-home DIR] [--force]
+//   codex2dsh instructions [--apply] [--dsh-home DIR] [--force]
 //   codex2dsh memory [--apply] [--out DIR] [--force]
 //   codex2dsh config [--apply] [--out PATH] [--force]
 //   codex2dsh sessions [--preview]        # 统计 + 委托指引（委托需在 DSH 会话内）
@@ -37,7 +37,7 @@ const HELP = `codex2dsh —— 把 Codex 配置迁移进 DSH（DSH 插件 CLI）
   codex2dsh preview                      只读预览全部可迁移资产
   codex2dsh mcp [--apply] [--out PATH]   MCP 镜像（密钥默认原样迁移；工具目录随迁）
   codex2dsh skills [--apply] [--agents-home DIR] [--fix-frontmatter] [--force]
-  codex2dsh instructions [--apply] [--agents-home DIR] [--force]
+  codex2dsh instructions [--apply] [--dsh-home DIR] [--force]
   codex2dsh memory [--apply] [--out DIR] [--force]
   codex2dsh config [--apply] [--out PATH] [--force]
   codex2dsh sessions [--preview]         统计；委托需在 DSH 会话内调用工具
@@ -136,8 +136,9 @@ async function main() {
       return
     }
     case 'instructions': {
+      const dshHome = flags['dsh-home'] ? String(flags['dsh-home']) : (flags['agents-home'] ? String(flags['agents-home']) : resolveDshHome())
       const report = apply
-        ? await migrateInstructions(codexHome, agentsHome, { force: flags.force === true, ledgerDir })
+        ? await migrateInstructions(codexHome, dshHome, { force: flags.force === true, ledgerDir })
         : await planInstructionsMigration(codexHome)
       console.log(JSON.stringify(report, null, 2))
       return

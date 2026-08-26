@@ -104,7 +104,7 @@ dsh plugin --profile desktop add -w link:D:/Projects/codex2dsh   # 替换为你�
 | **全量迁移向导** | 面板「开始全量迁移」 | 四步向导一键迁移全部资产，逐步展示进度与结果 |
 | **MCP 镜像** | 面板 MCP 卡片 / `migrate_codex_mcp` | 解析 `config.toml` 的 `[mcp_servers.*]` 生成可合并的 DSH MCP client YAML；**密钥默认原样迁移**（可选脱敏）；`include/exclude` 选择性迁移；**本地工具目录（如 mcp-toolbox）随迁并重写路径** |
 | **技能转换** | 面板技能卡片 / `migrate_codex_skills` | `~/.codex/skills/<name>/SKILL.md` → DSH 技能资产（frontmatter 适配 `kind: dsh`），脚本目录随迁，冲突自动消歧、幂等跳过；支持**按前缀批量排除**（如 `ccpanes-`） |
-| **全局指令** | 面板指令卡片 / `migrate_codex_instructions` | `AGENTS.md` / `instructions.md` → DSH 指令资产（原文完整保留），项目级规则给出挂载建议 |
+| **全局指令** | 面板指令卡片 / `migrate_codex_instructions` | `AGENTS.md` / `instructions.md` → **`$DSH_HOME/AGENTS.md`**（DSH 用户全局指令唯一位置，原文完整保留、合并分节），项目级规则给出挂载建议 |
 | **记忆迁移** | 面板记忆卡片 / `migrate_codex_memory` | Codex 记忆（含 sqlite 只读探测）→ DSH 记忆资产，不可读时降级报告 |
 | **配置建议** | 面板配置卡片 / `migrate_codex_config` | 模型 / Provider / 权限 / 项目信任 → 只读建议片段（绝不自动改 `settings.yaml`） |
 | **会话导入** | 面板会话卡片 / `migrate_codex_sessions` | 统计会话规模并委托 `import_codex`（dsh-chat-import）导入为可续聊会话 |

@@ -4,6 +4,22 @@
 
 ## [0.1.1] - 未发布
 
+### 修复：全局指令迁移位置错误导致 DSH 未注入
+
+- **缺陷**：旧版 `migrate_codex_instructions` 把全局指令写到
+  `$DSH_AGENTS_HOME/instructions/global.md`（`~/.agents/instructions/`），但
+  DSH 的指令发现（`@deepseek-ai/dsh-agent-instructions`）只认
+  `$DSH_HOME/AGENTS.md`（用户全局指令唯一位置）与项目目录链上的
+  `AGENTS.md/CLAUDE.md/AGENTS.local.md/CLAUDE.local.md`——`~/.agents/`
+  下的目录不参与发现，导致迁移的 Codex 全局规则从未注入对话（只看到项目级规则）。
+- **修复**（`lib/instructions.mjs`）：
+  - 目标改为 `$DSH_HOME/AGENTS.md`；`instructions.md`（若存在）合并进同一文件
+    （分节保留 + 每节来源注释），保证 DSH 一次加载全部全局规则；
+  - 幂等/冲突语义不变（目标相同跳过；不同且未 force 拒绝覆盖，保护人工修改）；
+  - 工具/面板/CLI 参数 `agentsHome` → `dshHome`（CLI 兼容旧 `--agents-home`）。
+- 测试：instructions 用例重写 + 新增（合并内容/无源跳过/目标位置断言），
+  总计 117 个全绿；L3 冒烟断言同步更新为 `$DSH_HOME/AGENTS.md`。
+
 ### 修复：导入 Codex 会话的标题丢失
 
 - **背景**：`import_codex` 的 codex 转换器不写 `session/title` 事件，DSH 标题

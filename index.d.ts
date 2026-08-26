@@ -52,7 +52,8 @@ export interface MigrateSkillsOptions extends CommonOptions {
 
 export interface MigrateInstructionsOptions extends CommonOptions {
   apply?: boolean
-  agentsHome?: string
+  /** DSH 家目录（默认 $DSH_HOME，即 ~/.dsh）；指令写到 <dshHome>/AGENTS.md（DSH 用户全局指令唯一位置） */
+  dshHome?: string
 }
 
 export interface MigrateMemoryOptions extends CommonOptions {

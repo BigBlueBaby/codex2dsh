@@ -88,9 +88,9 @@ check('maskSecrets 脱敏生效', maskedMirror.includes('****') && !maskedMirror
 const skills = await tool('migrate_codex_skills').execute({ apply: true })
 check('技能落盘', skills.ok === true && readFileSync(join(agentsHome, 'skills', 'demo-skill', 'SKILL.md'), 'utf8').includes('kind: dsh'))
 
-// 4) instructions apply
+// 4) instructions apply（DSH 用户全局指令位置：$DSH_HOME/AGENTS.md）
 const instr = await tool('migrate_codex_instructions').execute({ apply: true })
-check('指令落盘', instr.ok === true && readFileSync(join(agentsHome, 'instructions', 'global.md'), 'utf8').includes('<!-- codex2dsh: 来源'))
+check('指令落盘', instr.ok === true && readFileSync(join(dshHome, 'AGENTS.md'), 'utf8').includes('<!-- codex2dsh: 来源'))
 
 // 5) memory apply
 const mem = await tool('migrate_codex_memory').execute({ apply: true })
