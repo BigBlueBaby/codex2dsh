@@ -24,13 +24,13 @@ startup_timeout_sec = 120
 [mcp_servers."kingbase-demo-db"]
 type = "stdio"
 command = "npx"
-args = ["universal-db-mcp", "--permission-mode", "readwrite", "--type", "kingbase", "--host", "192.168.10.99", "--port", "54322", "--user", "system", "--password", "Example#2023", "--database", "demo"]
+args = ["universal-db-mcp", "--permission-mode", "readwrite", "--type", "kingbase", "--host", "192.168.10.99", "--port", 54322, "--user", "system", "--password", "Example#2023", "--database", "demo"]
 startup_timeout_sec = 120
 
 [mcp_servers."oracle-demo-db"]
 type = "stdio"
 command = "npx"
-args = ["universal-db-mcp", "--type", "oracle", "--host", "192.168.10.100", "--port", "1521", "--user", "demo_user", "--password", "demo#_2019", "--database", "orcl", "--oracle-client-path", 'D:\app\example\product\11.2.0\dbhome_1\BIN']
+args = ["universal-db-mcp", "--type", "oracle", "--host", "192.168.10.100", "--port", 1521, "--user", "demo_user", "--password", "demo#_2019", "--database", "orcl", "--oracle-client-path", 'D:\app\example\product\11.2.0\dbhome_1\BIN']
 startup_timeout_sec = 120
 
 [mcp_servers."oracle-demo-db".env]

@@ -34,6 +34,9 @@ test('buildMcpPlan 默认排除运行时；默认原样迁移密钥，maskSecret
   const kb = plan.find((s) => s.name === 'kingbase-demo-db')
   const pwIdx = kb.args.indexOf('--password')
   assert.equal(kb.args[pwIdx + 1], 'Example#2023', '默认应保留原值（用户需求：直接迁移密钥）')
+  // TOML 数值参数（--port 54322）必须字符串化——DSH args schema 要求 string[]
+  assert.ok(kb.args.every((a) => typeof a === 'string'), 'args 必须全部是字符串')
+  assert.ok(kb.args.includes('54322') && !kb.args.includes(54322), '数值参数应转为字符串')
 
   // maskSecrets:true → 脱敏
   const maskedPlan = buildMcpPlan(config, { excludeRuntime: true, maskSecrets: true })
