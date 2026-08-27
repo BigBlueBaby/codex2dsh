@@ -2,6 +2,28 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/) 与 SemVer。
 
+## [0.1.4] - 2026-08-26
+
+### 适配：dsh-chat-import v0.8.0（import_codex → import_chat 分发器）
+
+- **背景**：v0.8.0 将 18 个 import_* 工具收敛为 `import_chat` 分发器
+  （`format` 枚举选择来源），`import_codex` 工具名已移除（维护者
+  [Nwflower](https://github.com/Nwflower/dsh-chat-import) 提前预警，见
+  [codex2dsh#1](https://github.com/BigBlueBaby/codex2dsh/issues/1)）。
+- **适配**（`lib/delegate.mjs`）：
+  - `findImportCodex` 改为：优先探测 `import_chat`（校验其 `format` 枚举含
+    `'codex'`），兼容旧版 `import_codex`（<0.8.0）；schema 不可读时按可用处理；
+  - `callImportCodex` 委托分发：`import_chat` 调用带 `format: 'codex'`，
+    旧版直调；`preview/budget/restamp` 原样透传；
+  - 未安装提示文案与 doctor 检查同步更新（import_chat）。
+- **不受影响确认**：标题回填（`session/imported` 标记 `data.tool='codex'` 不变）
+  与工作区归组无需改动。
+- **文档**：README / docs/01-09 的 `import_codex` 引用全部更新为 `import_chat`。
+- **致谢**：新增 [docs/11-致谢与引用.md](docs/11-致谢与引用.md) 与 README 致谢
+  章节，列出引用的开源项目（dsh-chat-import / dsh-mnemon / DeepSeek Harness）
+  并附链接。
+- 测试更新（findImportCodex 双形态 + 委托 format 断言），全量绿。
+
 ## [0.1.3] - 2026-08-26
 
 ### 新增：Codex 记忆导入 dsh-mnemon（全局记忆引擎，记忆迁移真正可用）

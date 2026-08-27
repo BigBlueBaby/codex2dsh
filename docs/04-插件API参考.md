@@ -114,7 +114,7 @@ ctx.tools.register(defineTool({
 | 服务 | 注入方式 | 用法 |
 | --- | --- | --- |
 | `fs` | `inject: ['fs']` | 读写 `$DSH_HOME/codex2dsh/`（台账、镜像、资产）；**读 Codex 源用 Node `node:fs` 只读**（不依赖 host 写权限语义） |
-| `tools` | `inject: ['tools']` | `ctx.tools.register(...)`；也用于检测 `import_codex` 是否存在（`ctx.get?.('tools')` 或记录注册表） |
+| `tools` | `inject: ['tools']` | `ctx.tools.register(...)`；也用于检测 `import_chat` 是否存在（`ctx.get?.('tools')` 或记录注册表） |
 | `sessionPersistence` | 需要时 | 委托场景（会话相关） |
 | `workspaceRegistry` | 需要时 | 委托场景（cwd 归组） |
 | `webServer` | `ctx.inject(['webServer'])` | 面板路由 `POST /codex2dsh/preview` 等（M4） |

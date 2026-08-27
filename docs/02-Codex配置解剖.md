@@ -183,8 +183,8 @@ description: 检索已安装技能并给出使用方法。
 sessions/YYYY/MM/DD/rollout-*.jsonl     # 每日会话文件（Codex wire 格式）
 ```
 
-- 由 `import_codex`（dsh-chat-import）消费：解析 `user/assistant/function_call/custom_tool_call` 消息、还原工具调用与结果、支持增量续写与 force 副本。
-- 本插件 `migrate_codex_sessions` **委托**该工具，只做：统计规模 → 提示调用 `import_codex` → 关联台账。
+- 由 `import_chat`（dsh-chat-import）消费：解析 `user/assistant/function_call/custom_tool_call` 消息、还原工具调用与结果、支持增量续写与 force 副本。
+- 本插件 `migrate_codex_sessions` **委托**该工具，只做：统计规模 → 提示调用 `import_chat` → 关联台账。
 
 ## 6. 记忆 `~/.codex/memories/` 与 `memories_1.sqlite`
 

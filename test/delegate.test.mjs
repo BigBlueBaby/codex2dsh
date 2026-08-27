@@ -41,10 +41,20 @@ test('scanSessions 无会话目录返回零', () => {
   }
 })
 
-test('findImportCodex：支持 tools.get 与 registered 列表两种形态', () => {
-  const fakeTool = { name: 'import_codex', execute: async () => ({}) }
-  assert.equal(findImportCodex({ tools: { get: (n) => (n === 'import_codex' ? fakeTool : undefined) } }), fakeTool)
-  assert.equal(findImportCodex({ tools: { registered: [fakeTool] } }), fakeTool)
+test('findImportCodex：优先 import_chat（format 含 codex），兼容 import_codex', () => {
+  const legacy = { name: 'import_codex', execute: async () => ({}) }
+  // v0.8.0：import_chat 分发器（format 枚举含 codex）→ { tool, kind: import_chat }
+  const chat = { name: 'import_chat', execute: async () => ({}), parameters: { format: { enum: ['claude', 'codex', 'kimi'] } } }
+  assert.equal(findImportCodex({ tools: { get: (n) => (n === 'import_chat' ? chat : undefined) } }).kind, 'import_chat')
+  assert.equal(findImportCodex({ tools: { registered: [chat] } }).kind, 'import_chat')
+  // import_chat 的 format 枚举不含 codex → null
+  const noCodex = { name: 'import_chat', execute: async () => ({}), parameters: { format: { enum: ['claude', 'kimi'] } } }
+  assert.equal(findImportCodex({ tools: { registered: [noCodex] } }), null)
+  // schema 不可读 → 按可用处理
+  const bare = { name: 'import_chat', execute: async () => ({}) }
+  assert.equal(findImportCodex({ tools: { registered: [bare] } }).kind, 'import_chat')
+  // 旧版 import_codex 兼容
+  assert.equal(findImportCodex({ tools: { get: (n) => (n === 'import_codex' ? legacy : undefined) } }).kind, 'import_codex')
   assert.equal(findImportCodex({ tools: { registered: [] } }), null)
   assert.equal(findImportCodex(null), null)
 })
@@ -70,7 +80,8 @@ test('有 import_codex → 委托（透传参数）+ 台账', async () => {
   const fx = makeSessionsFixture()
   const calls = []
   const fakeImport = {
-    name: 'import_codex',
+    name: 'import_chat',
+    parameters: { format: { enum: ['claude', 'codex', 'kimi'] } },
     async execute(args) {
       calls.push(args)
       return {
@@ -83,11 +94,12 @@ test('有 import_codex → 委托（透传参数）+ 台账', async () => {
     },
   }
   try {
-    const ctx = { tools: { get: (n) => (n === 'import_codex' ? fakeImport : undefined) } }
+    const ctx = { tools: { get: (n) => (n === 'import_chat' ? fakeImport : undefined) } }
     const r = await planSessionsMigration(fx.home, ctx, { ledgerDir: fx.ledger, budget: 100000, restamp: true })
     assert.ok(r.items.some((i) => i.status === 'delegated' && i.note.includes('2 个会话')))
-    // 透传 path/preview/budget/restamp
+    // 透传 format:'codex' + path/preview/budget/restamp
     assert.equal(calls.length, 1)
+    assert.equal(calls[0].format, 'codex', 'import_chat 分发器必须带 format: codex')
     assert.ok(calls[0].path.endsWith('sessions'))
     assert.equal(calls[0].budget, 100000)
     assert.equal(calls[0].restamp, true)
@@ -106,7 +118,8 @@ test('preview 模式：委托透传 preview 且不写台账', async () => {
   const fx = makeSessionsFixture()
   const calls = []
   const fakeImport = {
-    name: 'import_codex',
+    name: 'import_chat',
+    parameters: { format: { enum: ['codex'] } },
     async execute(args) {
       calls.push(args)
       return { ok: true, sessionIds: ['s1'] }
@@ -115,7 +128,7 @@ test('preview 模式：委托透传 preview 且不写台账', async () => {
   try {
     const ctx = { tools: { get: () => fakeImport } }
     const r = await planSessionsMigration(fx.home, ctx, { preview: true, ledgerDir: fx.ledger })
-    assert.ok(r.items.some((i) => i.name === 'import_codex' && i.status === 'previewed'))
+    assert.ok(r.items.some((i) => i.name === 'import_chat' && i.status === 'previewed'))
     assert.equal(calls[0].preview, true)
     assert.equal(readLedgerCount(fx.ledger), 0)
   } finally {
@@ -136,7 +149,8 @@ test('委托成功后自动补标题（best-effort）：host 内有 sessionPersi
   const headers = [{ id: 'import-s1', events: [importedEvent, userEvent] }]
   const appended = []
   const fakeImport = {
-    name: 'import_codex',
+    name: 'import_chat',
+    parameters: { format: { enum: ['codex'] } },
     async execute() {
       return { ok: true, total: 1, imported: 1, results: [{ path: 'x.jsonl', status: 'imported', sessionId: 'import-s1' }] }
     },
@@ -181,7 +195,8 @@ test('委托成功后自动补标题（best-effort）：host 内有 sessionPersi
 test('委托成功后无 host ctx（CLI 形态）→ 不执行回填、不报错', async () => {
   const fx = makeSessionsFixture()
   const fakeImport = {
-    name: 'import_codex',
+    name: 'import_chat',
+    parameters: { format: { enum: ['codex'] } },
     async execute() {
       return { ok: true, sessionIds: ['import-s1'], summary: { imported: 1 } }
     },

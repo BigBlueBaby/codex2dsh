@@ -101,10 +101,10 @@ const cfg = await tool('migrate_codex_config').execute({ apply: true })
 check('配置建议片段', cfg.ok === true && existsSync(join(dshHome, 'codex2dsh', 'settings-suggest.yml')))
 check('配置建议含模型', cfg.suggestions?.agentDefaultModel?.suggested?.model === 'demo-model')
 
-// 7) sessions（无 import_codex → 指引；fake 注册后 → 委托）
+// 7) sessions（无 import_chat → 指引；fake 注册后 → 委托）
 const sess1 = await tool('migrate_codex_sessions').execute({})
 check('sessions 未装指引', sess1.warnings.some((w) => w.includes('dsh-chat-import')))
-ctx.tools.register({ name: 'import_codex', async execute(a) { return { ok: true, sessionIds: ['s1'] } } })
+ctx.tools.register({ name: 'import_chat', async execute(a) { return { ok: true, sessionIds: ['s1'] } } })
 const sess2 = await tool('migrate_codex_sessions').execute({})
 check('sessions 委托成功', sess2.items.some((i) => i.status === 'delegated'))
 

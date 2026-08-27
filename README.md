@@ -109,8 +109,8 @@ dsh plugin --profile desktop add -w link:D:/Projects/codex2dsh   # 替换为你�
 | **记忆迁移** | 面板记忆卡片 / `migrate_codex_memory` | Codex 记忆（含 sqlite 只读探测）→ DSH 记忆资产，不可读时降级报告 |
 | **记忆导入 dsh-mnemon** | `codex2dsh_import_memory` / CLI `memory-import` | 把迁移的 Codex 记忆导入 **dsh-mnemon**（全局记忆引擎，`~/.mnemon`）：Runtime 层提炼 memory_summary.md 为每轮注入的 USER/MEMORY 条目（容量裁剪、合并去重）；Documents 层导入三份完整记忆原文（可搜索）——恢复"像 Codex 一样自动读取/查询/写入" |
 | **配置建议** | 面板配置卡片 / `migrate_codex_config` | 模型 / Provider / 权限 / 项目信任 → 只读建议片段（绝不自动改 `settings.yaml`） |
-| **会话导入** | 面板会话卡片 / `migrate_codex_sessions` | 统计会话规模并委托 `import_codex`（dsh-chat-import）导入为可续聊会话 |
-| **会话标题回填** | 面板会话卡片「修复标题」/ `codex2dsh_fix_titles` | `import_codex` 不写 `session/title` 事件导致中文标题丢失（显示成工作区名）：从 `~/.codex/session_index.jsonl` 的 `thread_name` 或 rollout 首条真实提问回填标题（只补不覆盖、幂等、live 会话跳过）；委托导入后自动执行 |
+| **会话导入** | 面板会话卡片 / `migrate_codex_sessions` | 统计会话规模并委托 `import_chat`（dsh-chat-import）导入为可续聊会话 |
+| **会话标题回填** | 面板会话卡片「修复标题」/ `codex2dsh_fix_titles` | `import_chat` 不写 `session/title` 事件导致中文标题丢失（显示成工作区名）：从 `~/.codex/session_index.jsonl` 的 `thread_name` 或 rollout 首条真实提问回填标题（只补不覆盖、幂等、live 会话跳过）；委托导入后自动执行 |
 | **坏标题修复** | CLI `codex2dsh repair-titles` | 修复 0.1.1 早期缺陷误写的 `session/title` surfaceOp 坏事件（会话打不开 `SessionPersistenceCorruptionError`）；截断式修复零数据丢失，修复后重启 DSH 再回填 |
 | **工作区归组** | 面板会话卡片「整理工作区」/ `codex2dsh_regroup_sessions` / CLI `codex2dsh regroup` | Codex 非工作区会话（projectless）迁移后每个会话一个独立工作区、列表乱序：统一改写 header.cwd 并移动日志目录，归入单个 DSH 工作区（`projectless-thread-ids` 权威判定；其余会话不动；执行后重启 DSH） |
 | **迁移体检** | 面板体检卡片 / `codex2dsh_doctor` | 逐资产状态：已迁移 / 待迁移 / 不可迁移 / 密钥残留 |
@@ -164,7 +164,7 @@ codex2dsh ledger                       # 查看迁移台账
 - MCP 镜像与台账 → `~/.dsh/codex2dsh/`
 
 ### 导入的 Codex 会话标题丢了 / 显示成工作区名？
-`import_codex` 不写 `session/title` 事件，DSH 会回退到首条 user 消息——而 Codex rollout 首条常是 harness 注入（`<environment_context>` / AGENTS.md），所以显示成路径/工作区名。修复：面板「会话导入 → **修复标题**」按钮（或 `codex2dsh_fix_titles` 工具，`apply: true`），标题取自 `~/.codex/session_index.jsonl` 的 `thread_name`，缺失时取 rollout 首条真实提问；只补不覆盖、可重复执行。委托导入后也会自动补。
+`import_chat` 不写 `session/title` 事件，DSH 会回退到首条 user 消息——而 Codex rollout 首条常是 harness 注入（`<environment_context>` / AGENTS.md），所以显示成路径/工作区名。修复：面板「会话导入 → **修复标题**」按钮（或 `codex2dsh_fix_titles` 工具，`apply: true`），标题取自 `~/.codex/session_index.jsonl` 的 `thread_name`，缺失时取 rollout 首条真实提问；只补不覆盖、可重复执行。委托导入后也会自动补。
 
 ### 会话打不开，报 `SessionPersistenceCorruptionError: ... is not surface-eligible ...`？
 这是 0.1.1 早期回填缺陷：`session/title` 误带 `surfaceOp` 导致整份日志校验失败。修复：在 DSH 外执行 `codex2dsh repair-titles --apply`（截断清除坏事件，零数据丢失），**重启 DSH** 后重新点「修复标题」即可。
@@ -198,6 +198,16 @@ DSH 的 workspace 按会话工作目录（cwd）分组，而 Codex 非工作区�
 - 使用中发现问题或有新想法 → [Issues](https://github.com/BigBlueBaby/codex2dsh/issues)
 - 想直接上手 → [CONTRIBUTING.md](CONTRIBUTING.md) 与 [docs/05-实现方案.md](docs/05-实现方案.md)
 - 版本历史 → [CHANGELOG.md](CHANGELOG.md)
+
+## 🙏 致谢与引用的开源项目
+
+本插件无运行时依赖，以下项目以可选协同 / 目标平台 / 格式契约方式被引用，特此致谢：
+
+- [**dsh-chat-import**](https://github.com/Nwflower/dsh-chat-import)（Nwflower）— 会话历史导入委托（`import_chat`，`format: 'codex'`）
+- [**dsh-mnemon**](https://github.com/omdsh-dev/dsh-mnemon)（omdsh-dev）— Codex 记忆导入目标引擎（全局记忆）
+- [**DeepSeek Harness**](https://github.com/deepseek-ai/deepseek-harness) — 插件宿主平台与 `@deepseek-ai/dsh-mcp-client` 契约
+
+完整清单与致谢详见 [docs/11-致谢与引用.md](docs/11-致谢与引用.md)。
 
 ## 📄 许可
 
