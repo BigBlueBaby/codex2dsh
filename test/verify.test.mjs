@@ -5,7 +5,7 @@ import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import {
-  readMirrorServersDetail, scanProfileMcpMerge, verifyMigration,
+  readMirrorServersDetail, scanProfileMcpMerge, verifyMigration, scanProfilePluginDuplicates,
 } from '../lib/verify.mjs'
 import { readMirrorServerNames } from '../lib/mcp.mjs'
 import { adaptCodexReferences, dshMcpServers } from '../lib/instructions.mjs'
@@ -193,6 +193,78 @@ test('dshMcpServers：从 dshHome 读取 mirror 服务器集合', () => {
     const dsh = writeMirror(fx.root)
     assert.deepEqual(dshMcpServers(dsh), ['google-mcp-toolbox', 'figma'])
     assert.deepEqual(dshMcpServers(join(fx.root, 'empty')), [])
+  } finally {
+    fx.cleanup()
+  }
+})
+
+test('scanProfilePluginDuplicates：手动 insert 与 bundles 包重复加载检测', () => {
+  const fx = makeRoot()
+  try {
+    const dsh = join(fx.root, 'dsh-home')
+    const web = join(dsh, 'profiles', 'web')
+    // profile package.json：bundles 含 dsh-mnemon（自动组合）
+    mkdirSync(join(web, 'node_modules', 'dsh-mnemon'), { recursive: true })
+    writeFileSync(join(web, 'package.json'), JSON.stringify({
+      name: 'web-profile', version: '1.0.0',
+      dsh: { profile: { bundles: ['@deepseek-ai/dsh-base', 'dsh-mnemon'] } },
+    }, null, 2), 'utf8')
+    // 包声明 dsh.bundle.patch
+    writeFileSync(join(web, 'node_modules', 'dsh-mnemon', 'package.json'), JSON.stringify({
+      name: 'dsh-mnemon', version: '0.3.2', dsh: { bundle: { patch: './cordis.patch.yml' } },
+    }, null, 2), 'utf8')
+    writeFileSync(join(web, 'node_modules', 'dsh-mnemon', 'cordis.patch.yml'), '- insert:\n    - id: mnemon\n      name: dsh-mnemon\n', 'utf8')
+    // 手动 patch：重复的 mnemon insert（模拟 dsh-mnemon 双加载事故）
+    writeFileSync(join(web, 'cordis.patch.yml'), [
+      '- insert:',
+      '    - id: mcp-x',
+      "      name: '@deepseek-ai/dsh-mcp-client'",
+      '- insert:',
+      '    - id: mnemon',
+      '      name: dsh-mnemon',
+    ].join('\n'), 'utf8')
+
+    const dupes = scanProfilePluginDuplicates(dsh, 'web')
+    assert.equal(dupes.length, 1, '应检测到 mnemon 重复加载')
+    assert.equal(dupes[0].id, 'mnemon')
+    assert.equal(dupes[0].bundle, 'dsh-mnemon')
+    assert.ok(dupes[0].note.includes('duplicate loader entry'), '提示包含 duplicate loader entry')
+
+    // 修复后（移除手动 mnemon 行）→ 无重复
+    writeFileSync(join(web, 'cordis.patch.yml'), [
+      '- insert:',
+      '    - id: mcp-x',
+      "      name: '@deepseek-ai/dsh-mcp-client'",
+    ].join('\n'), 'utf8')
+    assert.equal(scanProfilePluginDuplicates(dsh, 'web').length, 0)
+
+    // 无 bundles / 无 patch → 无重复
+    assert.deepEqual(scanProfilePluginDuplicates(dsh, 'nope'), [])
+    assert.deepEqual(scanProfilePluginDuplicates(join(fx.root, 'empty'), 'web'), [])
+  } finally {
+    fx.cleanup()
+  }
+})
+
+test('verifyMigration：重复加载纳入警告', async () => {
+  const fx = makeRoot()
+  try {
+    const dsh = join(fx.root, 'dsh-home')
+    const web = join(dsh, 'profiles', 'web')
+    mkdirSync(join(web, 'node_modules', 'dsh-mnemon'), { recursive: true })
+    writeFileSync(join(web, 'package.json'), JSON.stringify({
+      name: 'web-profile', version: '1.0.0',
+      dsh: { profile: { bundles: ['dsh-mnemon'] } },
+    }, null, 2), 'utf8')
+    writeFileSync(join(web, 'node_modules', 'dsh-mnemon', 'package.json'), JSON.stringify({
+      name: 'dsh-mnemon', version: '0.3.2', dsh: { bundle: { patch: './cordis.patch.yml' } },
+    }, null, 2), 'utf8')
+    writeFileSync(join(web, 'node_modules', 'dsh-mnemon', 'cordis.patch.yml'), '- insert:\n    - id: mnemon\n', 'utf8')
+    writeFileSync(join(web, 'cordis.patch.yml'), '- insert:\n    - id: mnemon\n', 'utf8')
+    const codexHome = join(fx.root, 'codex-home')
+    mkdirSync(codexHome, { recursive: true })
+    const r = await verifyMigration(codexHome, dsh)
+    assert.ok(r.warnings.some((w) => w.includes('duplicate loader entry') && w.includes('dsh-mnemon')), 'verify 应报告重复加载')
   } finally {
     fx.cleanup()
   }
