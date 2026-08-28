@@ -11,6 +11,8 @@
 [![Node.js >= 22.19](https://img.shields.io/badge/Node.js-%3E%3D22.19-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](package.json)
 [![dsh >= 0.1.x](https://img.shields.io/badge/dsh-%3E%3D0.1.x-4A90D9?style=for-the-badge)](docs/01-总体架构.md)
 
+**简体中文** · [English](README.en.md)
+
 [🖥️ 可视化使用指南](#-可视化使用指南) · [📥 安装](#-安装) · [✨ 功能](#-功能) · [🔒 安全说明](#-安全说明) · [❓ 常见问题](#-常见问题) · [📚 文档](#-文档)
 
 </div>
