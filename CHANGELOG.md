@@ -19,7 +19,7 @@
 - **不受影响确认**：标题回填（`session/imported` 标记 `data.tool='codex'` 不变）
   与工作区归组无需改动。
 - **文档**：README / docs/01-09 的 `import_codex` 引用全部更新为 `import_chat`。
-- **致谢**：新增 [docs/11-致谢与引用.md](docs/11-致谢与引用.md) 与 README 致谢
+- **致谢**：新增 [docs/10-致谢与引用.md](docs/10-致谢与引用.md) 与 README 致谢
   章节，列出引用的开源项目（dsh-chat-import / dsh-mnemon / DeepSeek Harness）
   并附链接。
 - 测试更新（findImportCodex 双形态 + 委托 format 断言），全量绿。

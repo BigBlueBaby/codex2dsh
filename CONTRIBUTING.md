@@ -14,7 +14,7 @@ node bin/codex2dsh.mjs preview --codex-home C:\Users\<你>\.codex   # 体验预�
 
 ## 开发流程
 
-1. **先读文档**：`docs/01`–`docs/09`；改行为先改映射规范（`docs/03`），再改代码，最后同步测试与 CHANGELOG。
+1. **先读文档**：`docs/01`–`docs/10`；改行为先改映射规范（`docs/03`），再改代码，最后同步测试与 CHANGELOG。
 2. **模块约定**：`lib/` 中除 `tools.mjs/panel.mjs/command.mjs/index.mjs` 外都是纯函数（不依赖 `@deepseek-ai/*`），可独立单测。
 3. **安全红线**（见 [docs/09-安全边界.md](docs/09-安全边界.md)）：
    - 永不写入 `~/.codex/**`；

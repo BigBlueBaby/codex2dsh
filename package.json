@@ -46,7 +46,7 @@
     "@deepseek-ai/schemastery": ">=3.0.0"
   },
   "engines": {
-    "node": ">=22.13"
+    "node": ">=22.19"
   },
   "scripts": {
     "test": "node --test \"test/*.test.mjs\"",

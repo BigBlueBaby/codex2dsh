@@ -8,7 +8,7 @@
 [![npm downloads](https://img.shields.io/npm/dm/codex2dsh?style=for-the-badge&logo=npm&logoColor=white)](https://www.npmjs.com/package/codex2dsh)
 [![CI](https://img.shields.io/github/actions/workflow/status/BigBlueBaby/codex2dsh/ci.yml?style=for-the-badge&logo=githubactions&logoColor=white)](https://github.com/BigBlueBaby/codex2dsh/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
-[![Node.js >= 22.13](https://img.shields.io/badge/Node.js-%3E%3D22.13-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](package.json)
+[![Node.js >= 22.19](https://img.shields.io/badge/Node.js-%3E%3D22.19-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)](package.json)
 [![dsh >= 0.1.x](https://img.shields.io/badge/dsh-%3E%3D0.1.x-4A90D9?style=for-the-badge)](docs/01-总体架构.md)
 
 [🖥️ 可视化使用指南](#-可视化使用指南) · [📥 安装](#-安装) · [✨ 功能](#-功能) · [🔒 安全说明](#-安全说明) · [❓ 常见问题](#-常见问题) · [📚 文档](#-文档)
@@ -207,7 +207,7 @@ DSH 的 workspace 按会话工作目录（cwd）分组，而 Codex 非工作区�
 - [**dsh-mnemon**](https://github.com/omdsh-dev/dsh-mnemon)（omdsh-dev）— Codex 记忆导入目标引擎（全局记忆）
 - [**DeepSeek Harness**](https://github.com/deepseek-ai/deepseek-harness) — 插件宿主平台与 `@deepseek-ai/dsh-mcp-client` 契约
 
-完整清单与致谢详见 [docs/11-致谢与引用.md](docs/11-致谢与引用.md)。
+完整清单与致谢详见 [docs/10-致谢与引用.md](docs/10-致谢与引用.md)。
 
 ## 📄 许可
 

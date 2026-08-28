@@ -1,0 +1,74 @@
+name: 🐛 Bug 报告
+description: 提交一个问题反馈（迁移失败、启动异常、工具报错等）
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈！请尽量提供可复现信息，帮助我们快速定位。
+  - type: input
+    id: version
+    attributes:
+      label: codex2dsh 版本
+      description: 插件面板或 `npm view codex2dsh version` 可见
+      placeholder: 0.1.4
+    validations:
+      required: true
+  - type: input
+    id: dsh-version
+    attributes:
+      label: DSH 版本与环境
+      description: 如 DSH Desktop 版本、Windows/Linux/macOS、Node 版本
+      placeholder: DSH Desktop 0.1.x / Windows 11 / Node 24
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: 涉及功能
+      description: 问题出现在哪个迁移环节
+      options:
+        - MCP 镜像（migrate_codex_mcp）
+        - 技能迁移（migrate_codex_skills）
+        - 全局指令（migrate_codex_instructions）
+        - 记忆迁移 / dsh-mnemon 导入
+        - 会话导入委托（dsh-chat-import）
+        - 会话标题回填 / 工作区归组
+        - 验证（codex2dsh_verify）
+        - 面板 / CLI
+        - 插件安装 / 更新
+        - 其他
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: 问题描述
+      description: 发生了什么？期望什么？
+      placeholder: 迁移 X 时遇到 Y，期望 Z
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: 复现步骤
+      description: 尽量给出最小复现路径
+      placeholder: |
+        1. 执行 `codex2dsh mcp --apply`
+        2. 重启 DSH
+        3. 报错：...
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: 日志与报错
+      description: 相关日志（DSH 日志、错误信息、verify 输出）。注意脱敏：不要贴真实密钥/密码/连接串。
+      render: text
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: 确认
+      options:
+        - label: 我已确认日志/描述中不包含真实凭据（密钥、密码、token）
+          required: true
