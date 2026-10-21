@@ -175,3 +175,47 @@ test('runMcpMigration：工具目录随迁 + 镜像路径重写 + 原样密钥',
     rmSync(root, { recursive: true, force: true })
   }
 })
+
+
+test('TOML 的 enabled / url / bearer_token_env_var 与多行 args 正确映射', () => {
+  const toml = `
+[mcp_servers.remote-http]
+enabled = true
+url = 'https://example.test/mcp'
+bearer_token_env_var = 'EXAMPLE_TOKEN'
+
+[mcp_servers.disabled-one]
+enabled = false
+command = 'node'
+
+[mcp_servers.multiline]
+enabled = true
+command = 'node'
+args = [
+  'cli.js',
+  '--browser', 'msedge',
+  '--headless',
+]
+`
+  const { config, partial } = parseCodexConfig(toml)
+  assert.deepEqual(partial, [], `不应有部分解析：${partial.join(', ')}`)
+  assert.equal(config.mcpServers['remote-http'].url, 'https://example.test/mcp')
+  assert.equal(config.mcpServers['remote-http'].bearerTokenEnvVar, 'EXAMPLE_TOKEN')
+  assert.equal(config.mcpServers['disabled-one'].enabled, false)
+  assert.deepEqual(config.mcpServers.multiline.args, ['cli.js', '--browser', 'msedge', '--headless'])
+
+  const { plan, excluded } = buildMcpPlan(config, { excludeRuntime: false })
+  assert.ok(excluded.includes('disabled-one'), 'enabled=false 的服务器应被排除')
+  const http = plan.find((s) => s.name === 'remote-http')
+  assert.equal(http.url, 'https://example.test/mcp')
+
+  const yml = renderMcpPlan({ plan })
+  assert.ok(yml.includes('transport: streamable-http'), 'HTTP 服务器应渲染为 streamable-http')
+  assert.ok(
+    yml.includes("Authorization: !!js \"`Bearer ${process.env.EXAMPLE_TOKEN || ''}`\""),
+    'bearer_token_env_var 应渲染为动态 !!js 模板，而不是写死 token',
+  )
+  const ml = plan.find((s) => s.name === 'multiline')
+  assert.deepEqual(ml.args, ['cli.js', '--browser', 'msedge', '--headless'], '多行 args 应完整解析')
+})
+
