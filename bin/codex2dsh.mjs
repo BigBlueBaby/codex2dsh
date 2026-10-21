@@ -92,6 +92,7 @@ function parseArgs(argv) {
     if (a.startsWith('--')) {
       const eq = a.indexOf('=')
       if (eq > 0) out.flags[a.slice(2, eq)] = a.slice(eq + 1)
+      else if (i + 1 < argv.length && !argv[i + 1].startsWith('--')) out.flags[a.slice(2)] = argv[++i]
       else out.flags[a.slice(2)] = true
     } else {
       out.positional.push(a)
